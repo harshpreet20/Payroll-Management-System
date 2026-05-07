@@ -1,0 +1,320 @@
+{
+  "name": "PayrollPro — Complete Backend Workflow",
+  "meta": {
+    "instanceId": ""
+  },
+  "nodes": [
+    {
+      "id": "node-webhook",
+      "name": "PayrollPro Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "parameters": {
+        "path": "payrollpro",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      }
+    },
+    {
+      "id": "node-router",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [500, 300],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  { "id": "c1", "leftValue": "={{ $json.body.action }}", "rightValue": "login", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "login"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  { "id": "c2", "leftValue": "={{ $json.body.action }}", "rightValue": "employee_list", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "employee_list"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  { "id": "c3", "leftValue": "={{ $json.body.action }}", "rightValue": "employee_upsert", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "employee_upsert"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  { "id": "c4", "leftValue": "={{ $json.body.action }}", "rightValue": "employee_delete", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "employee_delete"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  { "id": "c5", "leftValue": "={{ $json.body.action }}", "rightValue": "attendance_record", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "attendance_record"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  { "id": "c6", "leftValue": "={{ $json.body.action }}", "rightValue": "attendance_list", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "attendance_list"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  { "id": "c7", "leftValue": "={{ $json.body.action }}", "rightValue": "attendance_delete", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "attendance_delete"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  { "id": "c8", "leftValue": "={{ $json.body.action }}", "rightValue": "payroll_generate", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "payroll_generate"
+            },
+            {
+              "conditions": {
+                "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" },
+                "combinator": "and",
+                "conditions": [
+                  { "id": "c9", "leftValue": "={{ $json.body.action }}", "rightValue": "payroll_list", "operator": { "type": "string", "operation": "equals" } }
+                ]
+              },
+              "renameOutput": true,
+              "outputKey": "payroll_list"
+            }
+          ]
+        },
+        "fallbackOutput": "extra"
+      }
+    },
+    {
+      "id": "node-login",
+      "name": "Handle Login",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 60],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// ─── PayrollPro: Login Handler ───\n// Reads credentials from the request, validates against the users store\n// stored in workflow static data, and returns a session token on success.\n//\n// HOW TO CUSTOMISE:\n//   Replace the staticData users store with your own database lookup\n//   (e.g. Postgres, MySQL, Airtable, Google Sheets) by swapping out\n//   the validation block below.\n\nconst store = $getWorkflowStaticData('global');\n\n// ── Seed default admin user on first run ──\nif (!store.users || store.users.length === 0) {\n  store.users = [\n    {\n      id: 'U001',\n      email: 'admin@company.com',\n      password: 'admin123',   // ← change in production!\n      name: 'Admin User',\n      role: 'admin',\n      companyName: 'My Company'\n    }\n  ];\n}\n\nconst body = $input.first().json.body;\nconst { email, password } = body.data || {};\n\nif (!email || !password) {\n  return [{ json: { success: false, message: 'Email and password are required.' } }];\n}\n\nconst user = store.users.find(\n  u => u.email.toLowerCase() === email.toLowerCase() && u.password === password\n);\n\nif (!user) {\n  return [{ json: { success: false, message: 'Invalid email or password.' } }];\n}\n\n// Generate a simple session token (replace with JWT in production)\nconst token = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);\n\nreturn [{\n  json: {\n    success: true,\n    message: 'Login successful',\n    data: {\n      token,\n      userId:      user.id,\n      name:        user.name,\n      email:       user.email,\n      role:        user.role,\n      companyName: user.companyName || 'My Company',\n      expiresAt:   Date.now() + 8 * 60 * 60 * 1000  // 8-hour session\n    }\n  }\n}];\n"
+      }
+    },
+    {
+      "id": "node-employee-list",
+      "name": "Employee List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 180],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nreturn [{ json: { success: true, data: store.employees || [] } }];\n"
+      }
+    },
+    {
+      "id": "node-employee-upsert",
+      "name": "Employee Upsert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.employees) store.employees = [];\n\nconst emp = $input.first().json.body.data;\nif (!emp || !emp.employeeId) {\n  return [{ json: { success: false, message: 'Missing employee data.' } }];\n}\n\nconst idx = store.employees.findIndex(e => e.employeeId === emp.employeeId);\nif (idx >= 0) {\n  store.employees[idx] = emp;\n} else {\n  store.employees.push(emp);\n}\n\nreturn [{ json: { success: true, data: emp, message: idx >= 0 ? 'Employee updated.' : 'Employee created.' } }];\n"
+      }
+    },
+    {
+      "id": "node-employee-delete",
+      "name": "Employee Delete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 420],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.employees) store.employees = [];\n\nconst { employeeId } = $input.first().json.body.data || {};\nif (!employeeId) return [{ json: { success: false, message: 'Missing employeeId.' } }];\n\nstore.employees = store.employees.filter(e => e.employeeId !== employeeId);\nif (store.attendance) store.attendance = store.attendance.filter(a => a.employeeId !== employeeId);\n\nreturn [{ json: { success: true, message: 'Employee deleted.' } }];\n"
+      }
+    },
+    {
+      "id": "node-attendance-record",
+      "name": "Attendance Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 540],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.attendance) store.attendance = [];\n\nconst rec = $input.first().json.body.data;\nif (!rec || !rec.id) return [{ json: { success: false, message: 'Missing attendance data.' } }];\n\nconst idx = store.attendance.findIndex(a => a.id === rec.id);\nif (idx >= 0) {\n  store.attendance[idx] = rec;\n} else {\n  store.attendance.push(rec);\n}\n\nreturn [{ json: { success: true, data: rec, message: 'Attendance saved.' } }];\n"
+      }
+    },
+    {
+      "id": "node-attendance-list",
+      "name": "Attendance List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 660],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst { month } = $input.first().json.body.data || {};\nconst records = store.attendance || [];\nconst filtered = month ? records.filter(r => r.date && r.date.startsWith(month)) : records;\nreturn [{ json: { success: true, data: filtered } }];\n"
+      }
+    },
+    {
+      "id": "node-attendance-delete",
+      "name": "Attendance Delete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 780],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.attendance) store.attendance = [];\n\nconst { id } = $input.first().json.body.data || {};\nif (!id) return [{ json: { success: false, message: 'Missing id.' } }];\n\nconst before = store.attendance.length;\nstore.attendance = store.attendance.filter(a => a.id !== id);\nconst deleted = before - store.attendance.length;\n\nreturn [{ json: { success: true, message: deleted > 0 ? 'Record deleted.' : 'Record not found.' } }];\n"
+      }
+    },
+    {
+      "id": "node-payroll-generate",
+      "name": "Payroll Generate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 900],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.payrolls) store.payrolls = [];\n\nconst body = $input.first().json.body;\nconst { month, payrolls: incoming } = body.data || {};\n\nif (!month || !incoming) return [{ json: { success: false, message: 'Missing month or payroll data.' } }];\n\n// Remove existing payroll for this month and replace with new\nstore.payrolls = store.payrolls.filter(p => p.month !== month);\nstore.payrolls.push(...incoming);\n\nreturn [{ json: { success: true, data: incoming, message: `Payroll saved for ${month}.` } }];\n"
+      }
+    },
+    {
+      "id": "node-payroll-list",
+      "name": "Payroll List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 1020],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst { month } = $input.first().json.body.data || {};\nconst records = store.payrolls || [];\nconst filtered = month ? records.filter(p => p.month === month) : records;\nreturn [{ json: { success: true, data: filtered } }];\n"
+      }
+    },
+    {
+      "id": "node-fallback",
+      "name": "Unknown Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 1140],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const action = $input.first().json.body?.action || 'unknown';\nreturn [{ json: { success: true, message: `Action '${action}' received. No handler defined.` } }];\n"
+      }
+    },
+    {
+      "id": "node-respond-login",
+      "name": "Respond Login",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1060, 60],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "node-respond-generic",
+      "name": "Respond Generic",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1060, 600],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "PayrollPro Webhook": {
+      "main": [
+        [{ "node": "Route by Action", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route by Action": {
+      "main": [
+        [{ "node": "Handle Login",       "type": "main", "index": 0 }],
+        [{ "node": "Employee List",      "type": "main", "index": 0 }],
+        [{ "node": "Employee Upsert",    "type": "main", "index": 0 }],
+        [{ "node": "Employee Delete",    "type": "main", "index": 0 }],
+        [{ "node": "Attendance Record",  "type": "main", "index": 0 }],
+        [{ "node": "Attendance List",    "type": "main", "index": 0 }],
+        [{ "node": "Attendance Delete",  "type": "main", "index": 0 }],
+        [{ "node": "Payroll Generate",   "type": "main", "index": 0 }],
+        [{ "node": "Payroll List",       "type": "main", "index": 0 }],
+        [{ "node": "Unknown Action",     "type": "main", "index": 0 }]
+      ]
+    },
+    "Handle Login":      { "main": [[{ "node": "Respond Login",   "type": "main", "index": 0 }]] },
+    "Employee List":     { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Employee Upsert":   { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Employee Delete":   { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Attendance Record": { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Attendance List":   { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Attendance Delete": { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Payroll Generate":  { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Payroll List":      { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Unknown Action":    { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

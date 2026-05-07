@@ -6,6 +6,7 @@ const STORAGE_KEYS = {
   attendance: 'payrollpro_attendance',
   payrolls: 'payrollpro_payrolls',
   settings: 'payrollpro_settings',
+  session:  'payrollpro_session',
 };
 
 const AVATAR_COLORS = [
@@ -151,6 +152,120 @@ class PayrollApp {
   /* ===== INIT ===== */
   init() {
     this.loadSettings();
+    const session = this.getSession();
+    if (session) {
+      this.showApp(session);
+    } else {
+      this.showLoginScreen();
+    }
+  }
+
+  showLoginScreen() {
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    if (this.settings.webhookUrl) {
+      this.showLoginPanel();
+    } else {
+      this.showSetupPanel();
+    }
+  }
+
+  showSetupPanel() {
+    document.getElementById('setupPanel').style.display = 'block';
+    document.getElementById('loginPanel').style.display = 'none';
+    const el = document.getElementById('setupWebhookUrl');
+    if (el) el.value = this.settings.webhookUrl || '';
+  }
+
+  showLoginPanel() {
+    document.getElementById('setupPanel').style.display = 'none';
+    document.getElementById('loginPanel').style.display = 'block';
+    setTimeout(() => document.getElementById('loginEmail')?.focus(), 100);
+  }
+
+  setupContinue() {
+    const url = document.getElementById('setupWebhookUrl').value.trim();
+    if (!url || !url.startsWith('http')) {
+      this.shakeInput('setupWebhookUrl');
+      return;
+    }
+    this.settings.webhookUrl = url;
+    localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(this.settings));
+    this.showLoginPanel();
+  }
+
+  shakeInput(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.animation = 'none';
+    el.style.borderColor = 'rgba(239,68,68,0.6)';
+    el.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
+    setTimeout(() => { el.style.borderColor = ''; el.style.boxShadow = ''; }, 1800);
+    el.focus();
+  }
+
+  async login(event) {
+    event.preventDefault();
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    const btn      = document.getElementById('loginBtn');
+    const spinner  = document.getElementById('loginSpinner');
+    const btnText  = document.getElementById('loginBtnText');
+    const errEl    = document.getElementById('loginError');
+
+    errEl.style.display = 'none';
+    btn.disabled = true;
+    btnText.style.display = 'none';
+    spinner.style.display = 'inline-block';
+
+    try {
+      const res = await fetch(this.settings.webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'login',
+          source: 'payrollpro',
+          timestamp: new Date().toISOString(),
+          data: { email, password },
+        }),
+      });
+
+      const json = await res.json().catch(() => null);
+
+      if (res.ok && json?.success && json?.data) {
+        const session = {
+          ...json.data,
+          webhookUrl: this.settings.webhookUrl,
+        };
+        localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(session));
+        if (json.data.companyName) {
+          this.settings.companyName = json.data.companyName;
+          localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(this.settings));
+        }
+        this.showApp(session);
+      } else {
+        const msg = json?.message || 'Invalid email or password. Please try again.';
+        errEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${msg}`;
+        errEl.style.display = 'flex';
+      }
+    } catch {
+      errEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Could not reach N8N. Check your webhook URL and try again.`;
+      errEl.style.display = 'flex';
+    } finally {
+      btn.disabled = false;
+      btnText.style.display = 'inline';
+      spinner.style.display = 'none';
+    }
+  }
+
+  showApp(session) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+
+    this.session = session;
+    if (session.webhookUrl) this.settings.webhookUrl = session.webhookUrl;
+
+    this.updateUserChip(session);
     this.loadData();
     this.setupNavigation();
     this.updateHeaderInfo();
@@ -159,6 +274,55 @@ class PayrollApp {
       this.initDashboardCharts();
       this.renderDashboard();
     }, 80);
+  }
+
+  updateUserChip(session) {
+    const name = session.name || session.email || 'User';
+    const role = session.role || 'user';
+    document.getElementById('headerUserName').textContent = name.split(' ')[0];
+    document.getElementById('headerUserRole').textContent = role;
+    document.getElementById('headerUserAvatar').textContent = name[0].toUpperCase();
+  }
+
+  getSession() {
+    try {
+      const s = JSON.parse(localStorage.getItem(STORAGE_KEYS.session) || 'null');
+      if (!s) return null;
+      if (s.expiresAt && Date.now() > s.expiresAt) {
+        localStorage.removeItem(STORAGE_KEYS.session);
+        return null;
+      }
+      return s;
+    } catch {
+      return null;
+    }
+  }
+
+  logout() {
+    localStorage.removeItem(STORAGE_KEYS.session);
+    this.session = null;
+    if (this.state.charts) {
+      Object.values(this.state.charts).forEach(c => c?.destroy?.());
+      this.state.charts = {};
+    }
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    this.showLoginPanel();
+    document.getElementById('loginEmail').value = '';
+    document.getElementById('loginPassword').value = '';
+    document.getElementById('loginError').style.display = 'none';
+  }
+
+  togglePasswordVisibility() {
+    const input = document.getElementById('loginPassword');
+    const icon  = document.getElementById('eyeIcon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.innerHTML = `<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>`;
+    } else {
+      input.type = 'password';
+      icon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
+    }
   }
 
   loadData() {
