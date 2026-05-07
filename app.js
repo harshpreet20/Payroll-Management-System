@@ -245,18 +245,22 @@ class PayrollApp {
         localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(session));
         this.showApp(session);
       } else {
-        const msg = json?.error || 'Invalid credentials. Please try again.';
-        errEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${msg}`;
-        errEl.style.display = 'flex';
+        this._showLoginError(errEl, json?.error || 'Invalid credentials. Please try again.');
       }
     } catch {
-      errEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Could not reach N8N. Check your webhook URL and try again.`;
-      errEl.style.display = 'flex';
+      this._showLoginError(errEl, 'Could not reach the server. Please try again.');
     } finally {
       btn.disabled = false;
       btnText.style.display = 'inline';
       spinner.style.display = 'none';
     }
+  }
+
+  _showLoginError(el, msg) {
+    const ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+    el.innerHTML = ICON + '<span></span>';
+    el.querySelector('span').textContent = ' ' + msg;
+    el.style.display = 'flex';
   }
 
   showApp(session) {
@@ -871,7 +875,7 @@ class PayrollApp {
     this.updatePendingLeaveBadge();
     this.toast(`Leave request submitted (${days} day${days > 1 ? 's' : ''})`, 'success');
 
-    this.sendToN8N('leave_submit', leave).catch(() => {});
+    this.sendToN8N('leave_submit', { leave }).catch(() => {});
   }
 
   approveLeave(id) {
@@ -998,7 +1002,7 @@ class PayrollApp {
     this.closeHolidayModal();
     this.renderHolidays();
     this.toast(`Holiday ${editId ? 'updated' : 'added'}: ${name}`, 'success');
-    this.sendToN8N('holiday_upsert', { id: editId || uid(), name, date, type, isPaid, desc }).catch(() => {});
+    this.sendToN8N('holiday_upsert', { holiday: { id: editId || uid(), name, date, type, isPaid, desc } }).catch(() => {});
   }
 
   toggleHolidayPaid(id, isPaid) {
@@ -1447,7 +1451,7 @@ class PayrollApp {
     this.saveData();
     this.closeModal();
     this.renderEmployees();
-    this.sendToN8N('employee_upsert', emp);
+    this.sendToN8N('employee_upsert', { employee: emp });
     this.toast(`Employee ${idx >= 0 ? 'updated' : 'added'} successfully`, 'success');
   }
 
@@ -1463,7 +1467,7 @@ class PayrollApp {
         this.state.attendance = this.state.attendance.filter(a => a.employeeId !== employeeId);
         this.saveData();
         this.renderEmployees();
-        this.sendToN8N('employee_delete', { employeeId });
+        this.sendToN8N('employee_delete', { id: employeeId });
         this.toast('Employee deleted', 'success');
       }
     );
@@ -1650,7 +1654,7 @@ class PayrollApp {
     this.saveData();
     this.closeModal();
     this.renderAttendance();
-    this.sendToN8N('attendance_record', rec);
+    this.sendToN8N('attendance_record', { record: rec });
     this.toast('Attendance record saved', 'success');
   }
 
@@ -1763,7 +1767,8 @@ class PayrollApp {
       this.saveData();
 
       this.renderPayroll();
-      this.sendToN8N('payroll_generate', { month: mk, payrolls: newPayrolls });
+      /* payroll is computed locally; sync each employee record to N8N */
+      newPayrolls.forEach(p => this.sendToN8N('payroll_generate', { employeeId: p.employeeId, month: mk }));
       this.toast(`Payroll processed for ${activeEmps.length} employees`, 'success');
 
       btn.disabled = false;
@@ -2078,38 +2083,29 @@ class PayrollApp {
 
   /* ===== N8N WEBHOOK ===== */
   async sendToN8N(action, data) {
-    const payload = {
-      action,
-      source: 'payrollpro',
-      businessName: this.settings.companyName,
-      timestamp: new Date().toISOString(),
-      data,
-    };
-
     try {
       const res = await fetch(N8N_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ action, ...data }),
       });
-
       if (res.ok) {
         const json = await res.json().catch(() => null);
-        if (json?.data) this.handleN8NResponse(action, json.data);
+        if (json?.ok) this.handleN8NResponse(action, json);
       }
     } catch {
       /* silent fail — local data already saved */
     }
   }
 
-  handleN8NResponse(action, data) {
-    if (action === 'employee_list' && Array.isArray(data)) {
-      this.state.employees = data;
+  handleN8NResponse(action, json) {
+    if (action === 'employee_list' && Array.isArray(json.employees)) {
+      this.state.employees = json.employees;
       this.saveData();
       if (this.state.currentPage === 'employees') this.renderEmployees();
     }
-    if (action === 'attendance_list' && Array.isArray(data)) {
-      this.state.attendance = data;
+    if (action === 'attendance_list' && Array.isArray(json.attendance)) {
+      this.state.attendance = json.attendance;
       this.saveData();
       if (this.state.currentPage === 'attendance') this.renderAttendance();
     }
