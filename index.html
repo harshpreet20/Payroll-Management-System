@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Staff Attendance & Payroll</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">SP</div>
+          <div>
+            <h1>Staff Payroll</h1>
+            <p>Attendance and salary control</p>
+          </div>
+        </div>
+
+        <nav class="nav-tabs" aria-label="Main sections">
+          <button class="nav-tab active" type="button" data-tab="attendance">Attendance</button>
+          <button class="nav-tab" type="button" data-tab="employees">Employees</button>
+          <button class="nav-tab" type="button" data-tab="payroll">Payroll</button>
+          <button class="nav-tab" type="button" data-tab="settings">Settings</button>
+        </nav>
+
+        <div class="sidebar-card">
+          <span class="label">Today</span>
+          <strong id="todayLabel">--</strong>
+          <span class="muted">Webhook-backed workflow</span>
+        </div>
+      </aside>
+
+      <main class="content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Operations Dashboard</p>
+            <h2 id="screenTitle">Daily Attendance</h2>
+          </div>
+          <div class="status-pill" id="connectionStatus">Webhook not set</div>
+        </header>
+
+        <section class="summary-grid" aria-label="Quick summary">
+          <article class="metric">
+            <span>Staff Capacity</span>
+            <strong>50</strong>
+          </article>
+          <article class="metric">
+            <span>Regular Shift</span>
+            <strong>8h</strong>
+          </article>
+          <article class="metric">
+            <span>Overtime</span>
+            <strong>Auto</strong>
+          </article>
+          <article class="metric">
+            <span>Payroll Day</span>
+            <strong>1st</strong>
+          </article>
+        </section>
+
+        <section class="panel tab-panel active" id="attendance">
+          <div class="panel-head">
+            <div>
+              <h3>Record Daily Attendance</h3>
+              <p>Submit one staff entry at a time to n8n.</p>
+            </div>
+            <button class="ghost-button" type="button" id="fillSampleAttendance">Sample</button>
+          </div>
+
+          <form class="form-grid" id="attendanceForm">
+            <label>
+              Date
+              <input name="date" type="date" required />
+            </label>
+            <label>
+              Employee ID
+              <input name="employeeId" type="text" placeholder="EMP001" required />
+            </label>
+            <label>
+              Employee Name
+              <input name="employeeName" type="text" placeholder="Staff name" required />
+            </label>
+            <label>
+              Status
+              <select name="status" required>
+                <option>Present</option>
+                <option>Absent</option>
+                <option>Half Day</option>
+                <option>Paid Leave</option>
+                <option>Unpaid Leave</option>
+                <option>Weekly Off</option>
+                <option>Holiday</option>
+              </select>
+            </label>
+            <label>
+              Shift Hours
+              <input name="shiftHours" type="number" min="0" max="24" step="0.25" value="8" required />
+            </label>
+            <label>
+              Hours Worked
+              <input name="hoursWorked" type="number" min="0" max="24" step="0.25" value="8" required />
+            </label>
+            <label>
+              Late Minutes
+              <input name="lateMinutes" type="number" min="0" step="1" value="0" />
+            </label>
+            <label class="wide">
+              Remarks
+              <input name="remarks" type="text" placeholder="Optional notes" />
+            </label>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Submit Attendance</button>
+              <button class="secondary-button" type="reset">Clear</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel tab-panel" id="employees">
+          <div class="panel-head">
+            <div>
+              <h3>Add or Update Employee</h3>
+              <p>Send staff master data to n8n for Sheets or SQL.</p>
+            </div>
+            <button class="ghost-button" type="button" id="fillSampleEmployee">Sample</button>
+          </div>
+
+          <form class="form-grid" id="employeeForm">
+            <label>
+              Employee ID
+              <input name="employeeId" type="text" placeholder="EMP001" required />
+            </label>
+            <label>
+              Full Name
+              <input name="employeeName" type="text" placeholder="Staff name" required />
+            </label>
+            <label>
+              Role
+              <input name="role" type="text" placeholder="Operator" />
+            </label>
+            <label>
+              Department
+              <input name="department" type="text" placeholder="Production" />
+            </label>
+            <label>
+              Joining Date
+              <input name="joiningDate" type="date" />
+            </label>
+            <label>
+              Monthly Salary
+              <input name="monthlySalary" type="number" min="0" step="0.01" placeholder="20000" required />
+            </label>
+            <label>
+              Status
+              <select name="status" required>
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+            </label>
+            <label class="wide">
+              Payment Details
+              <input name="paymentDetails" type="text" placeholder="Bank account, UPI, or internal note" />
+            </label>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Save Employee</button>
+              <button class="secondary-button" type="reset">Clear</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel tab-panel" id="payroll">
+          <div class="panel-head">
+            <div>
+              <h3>Generate Monthly Salary</h3>
+              <p>Trigger the monthly payroll workflow on demand.</p>
+            </div>
+          </div>
+
+          <form class="form-grid compact" id="payrollForm">
+            <label>
+              Payroll Month
+              <input name="payrollMonth" type="month" required />
+            </label>
+            <label>
+              Regular Shift Hours
+              <input name="regularShiftHours" type="number" min="1" max="24" step="0.25" value="8" required />
+            </label>
+            <label>
+              Overtime Multiplier
+              <input name="overtimeMultiplier" type="number" min="1" step="0.1" value="1.5" required />
+            </label>
+            <label>
+              Payment Date
+              <input name="paymentDate" type="date" required />
+            </label>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Generate Payroll</button>
+            </div>
+          </form>
+
+          <div class="callout">
+            <strong>Automatic option</strong>
+            <span>In n8n, schedule the same payroll action for the 1st of every month.</span>
+          </div>
+        </section>
+
+        <section class="panel tab-panel" id="settings">
+          <div class="panel-head">
+            <div>
+              <h3>Webhook Settings</h3>
+              <p>Use your production n8n webhook URL here.</p>
+            </div>
+          </div>
+
+          <form class="settings-form" id="settingsForm">
+            <label>
+              n8n Webhook URL
+              <input name="webhookUrl" type="url" placeholder="https://your-n8n.com/webhook/payroll" />
+            </label>
+            <label>
+              Business Name
+              <input name="businessName" type="text" placeholder="Your company name" />
+            </label>
+            <div class="form-actions">
+              <button class="primary-button" type="submit">Save Settings</button>
+              <button class="secondary-button" type="button" id="testWebhook">Test Webhook</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="activity-panel">
+          <div class="activity-head">
+            <h3>Latest Request</h3>
+            <button class="ghost-button" type="button" id="copyPayload">Copy Payload</button>
+          </div>
+          <pre id="payloadPreview">{}</pre>
+          <div class="toast" id="toast" role="status" aria-live="polite"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
