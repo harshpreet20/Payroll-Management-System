@@ -128,6 +128,11 @@
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
           <span>Attendance</span>
         </button>
+        <button class="nav-item" data-page="leaves">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          <span>Leave & Approval</span>
+          <span class="nav-badge" id="pendingLeaveBadge" style="display:none">0</span>
+        </button>
         <button class="nav-item" data-page="payroll">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           <span>Payroll</span>
@@ -135,6 +140,20 @@
         <button class="nav-item" data-page="reports">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
           <span>Reports</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-section">
+      <p class="sidebar-section-label">Management</p>
+      <nav class="sidebar-nav">
+        <button class="nav-item" data-page="holidays">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+          <span>Holidays</span>
+        </button>
+        <button class="nav-item" data-page="biometric">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/></svg>
+          <span>Biometric Terminal</span>
         </button>
       </nav>
     </div>
@@ -194,12 +213,58 @@
       <section id="page-dashboard" class="page active">
         <div class="page-header">
           <div>
-            <h2 id="dashGreeting">Good morning! 👋</h2>
-            <p class="text-secondary">Here's your payroll overview for today.</p>
+            <h2 id="dashGreeting">Good morning!</h2>
+            <p class="text-secondary" id="dashSubtitle">Here's your workforce overview for today.</p>
           </div>
-          <button class="btn btn-primary" onclick="app.navigateTo('payroll')">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Run Payroll
+          <div class="header-actions">
+            <button class="btn btn-secondary btn-sm" onclick="app.navigateTo('leaves')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              Apply Leave
+            </button>
+            <button class="btn btn-primary" onclick="app.navigateTo('payroll')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Run Payroll
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions-row">
+          <button class="quick-action-btn" onclick="app.openLeaveModal()">
+            <div class="qa-icon qa-leave">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            </div>
+            <span>Apply Leave</span>
+          </button>
+          <button class="quick-action-btn" onclick="app.navigateTo('attendance')">
+            <div class="qa-icon qa-attendance">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><polyline points="9 16 11 18 15 14"/></svg>
+            </div>
+            <span>Attendance</span>
+          </button>
+          <button class="quick-action-btn" onclick="app.navigateTo('payroll')">
+            <div class="qa-icon qa-payroll">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            </div>
+            <span>Payroll</span>
+          </button>
+          <button class="quick-action-btn" onclick="app.navigateTo('biometric')">
+            <div class="qa-icon qa-biometric">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/></svg>
+            </div>
+            <span>Biometric</span>
+          </button>
+          <button class="quick-action-btn" onclick="app.navigateTo('holidays')">
+            <div class="qa-icon qa-holiday">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32"/></svg>
+            </div>
+            <span>Holidays</span>
+          </button>
+          <button class="quick-action-btn" onclick="app.navigateTo('reports')">
+            <div class="qa-icon qa-reports">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            </div>
+            <span>Reports</span>
           </button>
         </div>
 
@@ -246,6 +311,61 @@
             </div>
             <div class="metric-value" id="metricNextPayroll">--</div>
             <div class="metric-label">Next Payroll Date</div>
+          </div>
+        </div>
+
+        <!-- On Leave Today + Today's Overview -->
+        <div class="dashboard-mid-row">
+          <div class="card on-leave-card">
+            <div class="card-header">
+              <h3>On Leave Today</h3>
+              <span class="badge badge-warning" id="onLeaveCount">0</span>
+            </div>
+            <div id="onLeaveList" class="on-leave-list">
+              <div class="empty-state">No one on leave today</div>
+            </div>
+          </div>
+
+          <div class="card today-overview-card">
+            <div class="card-header">
+              <h3>Today's Shift Overview</h3>
+              <span class="text-secondary" id="todayDateLabel"></span>
+            </div>
+            <div class="shift-stats-grid">
+              <div class="shift-stat">
+                <div class="shift-stat-value text-success" id="shiftPresent">0</div>
+                <div class="shift-stat-label">Present</div>
+              </div>
+              <div class="shift-stat">
+                <div class="shift-stat-value text-danger" id="shiftAbsent">0</div>
+                <div class="shift-stat-label">Absent</div>
+              </div>
+              <div class="shift-stat">
+                <div class="shift-stat-value text-warning" id="shiftHalfDay">0</div>
+                <div class="shift-stat-label">Half Day</div>
+              </div>
+              <div class="shift-stat">
+                <div class="shift-stat-value text-info" id="shiftOnLeave">0</div>
+                <div class="shift-stat-label">On Leave</div>
+              </div>
+            </div>
+            <div class="shift-attendance-bar" id="shiftAttBar">
+              <div class="shift-bar-fill" id="shiftBarFill" style="width:0%"></div>
+            </div>
+            <div class="shift-bar-label"><span id="shiftBarPct">0%</span> attendance today</div>
+          </div>
+
+          <div class="card pending-leaves-card" id="pendingLeavesCard">
+            <div class="card-header">
+              <h3>Pending Approvals</h3>
+              <span class="badge badge-danger" id="pendingLeaveCountDash">0</span>
+            </div>
+            <div id="pendingLeavesDash" class="pending-leaves-list">
+              <div class="empty-state">No pending leaves</div>
+            </div>
+            <button class="btn btn-secondary btn-sm" style="margin-top:12px;width:100%" onclick="app.navigateTo('leaves')">
+              View All Leave Requests
+            </button>
           </div>
         </div>
 
@@ -612,6 +732,231 @@
         </div>
       </section>
 
+      <!-- ===== LEAVES ===== -->
+      <section id="page-leaves" class="page">
+        <div class="page-header">
+          <div>
+            <h2>Leave & Approval</h2>
+            <p class="text-secondary">Manage employee leave requests and approvals</p>
+          </div>
+          <button class="btn btn-primary" onclick="app.openLeaveModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Apply Leave
+          </button>
+        </div>
+
+        <!-- Leave Summary Cards -->
+        <div class="leave-summary-row" id="leaveSummaryRow">
+          <div class="leave-summary-card">
+            <div class="ls-label">Casual Leave (CL)</div>
+            <div class="ls-value" id="lsCL">0 / 12</div>
+            <div class="ls-bar"><div class="ls-bar-fill ls-cl" id="lsCLBar" style="width:0%"></div></div>
+            <div class="ls-sub" id="lsCLSub">0 used</div>
+          </div>
+          <div class="leave-summary-card">
+            <div class="ls-label">Sick Leave (SL)</div>
+            <div class="ls-value" id="lsSL">0 / 7</div>
+            <div class="ls-bar"><div class="ls-bar-fill ls-sl" id="lsSLBar" style="width:0%"></div></div>
+            <div class="ls-sub" id="lsSLSub">0 used</div>
+          </div>
+          <div class="leave-summary-card">
+            <div class="ls-label">Earned Leave (EL)</div>
+            <div class="ls-value" id="lsEL">0 / 15</div>
+            <div class="ls-bar"><div class="ls-bar-fill ls-el" id="lsELBar" style="width:0%"></div></div>
+            <div class="ls-sub" id="lsELSub">0 used</div>
+          </div>
+          <div class="leave-summary-card">
+            <div class="ls-label">Maternity / Paternity</div>
+            <div class="ls-value" id="lsML">0</div>
+            <div class="ls-bar"><div class="ls-bar-fill ls-ml" id="lsMLBar" style="width:0%"></div></div>
+            <div class="ls-sub">As applicable</div>
+          </div>
+        </div>
+
+        <!-- Pending Banner -->
+        <div id="pendingLeaveBanner" class="pending-banner" style="display:none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span id="pendingBannerText">0 leave requests pending approval</span>
+          <button class="btn btn-secondary btn-sm" onclick="app.filterLeaves('Pending')">Review Now</button>
+        </div>
+
+        <!-- Filters + Table -->
+        <div class="card table-card">
+          <div class="card-header">
+            <h3>Leave Requests</h3>
+            <div class="header-actions">
+              <select class="select-sm" id="leaveFilterStatus" onchange="app.renderLeaves()">
+                <option value="">All Status</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+              <select class="select-sm" id="leaveFilterType" onchange="app.renderLeaves()">
+                <option value="">All Types</option>
+                <option value="CL">Casual Leave</option>
+                <option value="SL">Sick Leave</option>
+                <option value="EL">Earned Leave</option>
+                <option value="ML">Maternity Leave</option>
+                <option value="PL">Paternity Leave</option>
+                <option value="LWP">Leave Without Pay</option>
+              </select>
+            </div>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Leave Type</th>
+                <th>From</th>
+                <th>To</th>
+                <th>Days</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="leavesTableBody">
+              <tr><td colspan="8" class="empty-state">No leave requests found</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== HOLIDAYS ===== -->
+      <section id="page-holidays" class="page">
+        <div class="page-header">
+          <div>
+            <h2>Holiday Calendar</h2>
+            <p class="text-secondary">Manage national, regional, and company holidays</p>
+          </div>
+          <div class="header-actions">
+            <select class="select-sm" id="holidayYearFilter" onchange="app.renderHolidays()"></select>
+            <button class="btn btn-primary" onclick="app.openHolidayModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Holiday
+            </button>
+          </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="holiday-stats-row">
+          <div class="holiday-stat-card">
+            <div class="hstat-val" id="hstatTotal">0</div>
+            <div class="hstat-label">Total Holidays</div>
+          </div>
+          <div class="holiday-stat-card">
+            <div class="hstat-val text-success" id="hstatPaid">0</div>
+            <div class="hstat-label">Paid Holidays</div>
+          </div>
+          <div class="holiday-stat-card">
+            <div class="hstat-val text-warning" id="hstatUnpaid">0</div>
+            <div class="hstat-label">Unpaid Holidays</div>
+          </div>
+          <div class="holiday-stat-card">
+            <div class="hstat-val text-info" id="hstatUpcoming">0</div>
+            <div class="hstat-label">Upcoming This Month</div>
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Holiday Name</th>
+                <th>Type</th>
+                <th>Day</th>
+                <th>Pay Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="holidaysTableBody">
+              <tr><td colspan="6" class="empty-state">No holidays configured</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== BIOMETRIC TERMINAL ===== -->
+      <section id="page-biometric" class="page">
+        <div class="page-header">
+          <div>
+            <h2>Biometric Terminal</h2>
+            <p class="text-secondary">Fingerprint attendance — no login required for workers</p>
+          </div>
+          <button class="btn btn-primary" id="launchKioskBtn" onclick="app.launchBiometricKiosk()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/></svg>
+            Launch Kiosk Terminal
+          </button>
+        </div>
+
+        <div class="biometric-layout">
+          <!-- Device Config -->
+          <div class="card bio-config-card">
+            <div class="card-header">
+              <h3>Device Configuration</h3>
+              <span class="badge" id="bioDeviceStatus">Disconnected</span>
+            </div>
+            <div class="form-group">
+              <label>Device / Middleware URL</label>
+              <input type="url" class="input" id="bioMiddlewareUrl" placeholder="http://localhost:8000" value="http://localhost:8000">
+              <p class="form-hint">Local REST endpoint exposed by your fingerprint device driver (e.g., Mantra MFS100, ZKTeco, Nitgen)</p>
+            </div>
+            <div class="form-group">
+              <label>Device Type</label>
+              <select class="input" id="bioDeviceType">
+                <option value="mantra">Mantra MFS100 / MFS500</option>
+                <option value="zkteco">ZKTeco / ZKFinger SDK</option>
+                <option value="nitgen">Nitgen FIM10</option>
+                <option value="custom">Custom REST API</option>
+              </select>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-secondary" onclick="app.testBiometricDevice()">Test Connection</button>
+              <button class="btn btn-primary" onclick="app.saveBioConfig()">Save Config</button>
+            </div>
+          </div>
+
+          <!-- Enrollment Section -->
+          <div class="card bio-enroll-card">
+            <div class="card-header">
+              <h3>Employee Enrollment</h3>
+              <span class="text-secondary text-sm" id="enrolledCount">0 enrolled</span>
+            </div>
+            <p class="text-secondary text-sm" style="margin-bottom:14px">Map each employee to their Device User ID returned by the fingerprint scanner during 1:N matching.</p>
+            <div class="form-group">
+              <label>Select Employee</label>
+              <select class="input" id="bioEnrollEmployee"></select>
+            </div>
+            <div class="form-group">
+              <label>Device User ID (from scanner)</label>
+              <input type="text" class="input" id="bioDeviceUserId" placeholder="e.g. FP_0042">
+            </div>
+            <button class="btn btn-primary" onclick="app.enrollBiometric()">Save Enrollment</button>
+
+            <div class="bio-enrolled-list" id="bioEnrolledList">
+              <div class="empty-state">No employees enrolled yet</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Biometric Log -->
+        <div class="card" style="margin-top:20px">
+          <div class="card-header">
+            <h3>Recent Biometric Attendance</h3>
+            <button class="btn-link" onclick="app.renderBioLog()">Refresh</button>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Employee</th><th>Date</th><th>Time</th><th>Status</th><th>Device ID</th></tr>
+            </thead>
+            <tbody id="bioLogTable">
+              <tr><td colspan="5" class="empty-state">No biometric records yet</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
     </main>
   </div>
 </div>
@@ -645,6 +990,159 @@
       </div>
     </div>
     <div class="modal-body" id="payslipBody"></div>
+  </div>
+</div>
+
+<!-- ===== BIOMETRIC KIOSK OVERLAY ===== -->
+<div class="kiosk-overlay" id="kioskOverlay" style="display:none">
+  <button class="kiosk-close" onclick="app.closeKiosk()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    Exit Kiosk
+  </button>
+
+  <div class="kiosk-inner">
+    <div class="kiosk-brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      <span>PayrollPro</span>
+    </div>
+
+    <div class="kiosk-title" id="kioskTitle">Fingerprint Attendance</div>
+    <div class="kiosk-subtitle" id="kioskSubtitle">Touch the fingerprint scanner to mark attendance</div>
+
+    <!-- Fingerprint animation -->
+    <div class="kiosk-fp-wrap" id="kioskFpWrap">
+      <div class="kiosk-fp-ring kiosk-fp-ring1"></div>
+      <div class="kiosk-fp-ring kiosk-fp-ring2"></div>
+      <div class="kiosk-fp-icon" id="kioskFpIcon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/></svg>
+      </div>
+    </div>
+
+    <!-- Scan button -->
+    <button class="kiosk-scan-btn" id="kioskScanBtn" onclick="app.triggerBiometricScan()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/></svg>
+      Press &amp; Hold Scanner
+    </button>
+
+    <!-- Recognition result -->
+    <div class="kiosk-result" id="kioskResult" style="display:none">
+      <div class="kiosk-result-avatar" id="kioskResultAvatar">?</div>
+      <div class="kiosk-result-info">
+        <div class="kiosk-result-name" id="kioskResultName">Employee</div>
+        <div class="kiosk-result-meta" id="kioskResultMeta">--</div>
+      </div>
+      <div class="kiosk-result-status" id="kioskResultStatus">Marked Present</div>
+    </div>
+
+    <!-- Recent scans ticker -->
+    <div class="kiosk-log" id="kioskLog"></div>
+
+    <div class="kiosk-time" id="kioskTime"></div>
+    <div class="kiosk-date" id="kioskDate"></div>
+  </div>
+</div>
+
+<!-- ===== LEAVE MODAL ===== -->
+<div class="modal-overlay" id="leaveModalOverlay">
+  <div class="modal" id="leaveModal">
+    <div class="modal-header">
+      <h3 id="leaveModalTitle">Apply for Leave</h3>
+      <button class="modal-close" onclick="app.closeLeaveModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Employee <span class="required">*</span></label>
+          <select class="input" id="leaveEmployee" required></select>
+        </div>
+        <div class="form-group">
+          <label>Leave Type <span class="required">*</span></label>
+          <select class="input" id="leaveType" required>
+            <option value="CL">Casual Leave (CL)</option>
+            <option value="SL">Sick Leave (SL)</option>
+            <option value="EL">Earned Leave (EL)</option>
+            <option value="ML">Maternity Leave (ML)</option>
+            <option value="PL">Paternity Leave (PL)</option>
+            <option value="LWP">Leave Without Pay (LWP)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>From Date <span class="required">*</span></label>
+          <input type="date" class="input" id="leaveFromDate" required>
+        </div>
+        <div class="form-group">
+          <label>To Date <span class="required">*</span></label>
+          <input type="date" class="input" id="leaveToDate" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Reason <span class="required">*</span></label>
+        <textarea class="input" id="leaveReason" rows="3" placeholder="Brief reason for leave..." required></textarea>
+      </div>
+      <div class="form-group">
+        <label>Emergency Contact (if applicable)</label>
+        <input type="text" class="input" id="leaveEmergencyContact" placeholder="Name and phone number">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeLeaveModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="app.saveLeave()">Submit Request</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HOLIDAY MODAL ===== -->
+<div class="modal-overlay" id="holidayModalOverlay">
+  <div class="modal" id="holidayModal">
+    <div class="modal-header">
+      <h3 id="holidayModalTitle">Add Holiday</h3>
+      <button class="modal-close" onclick="app.closeHolidayModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Holiday Name <span class="required">*</span></label>
+          <input type="text" class="input" id="holidayName" placeholder="e.g. Diwali" required>
+        </div>
+        <div class="form-group">
+          <label>Date <span class="required">*</span></label>
+          <input type="date" class="input" id="holidayDate" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Type</label>
+          <select class="input" id="holidayType">
+            <option value="National">National Holiday</option>
+            <option value="Regional">Regional Holiday</option>
+            <option value="Company">Company Holiday</option>
+            <option value="Optional">Optional Holiday</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Pay Status</label>
+          <select class="input" id="holidayIsPaid">
+            <option value="true">Paid (salary not deducted)</option>
+            <option value="false">Unpaid (salary deducted if absent)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <input type="text" class="input" id="holidayDesc" placeholder="Optional description">
+      </div>
+      <input type="hidden" id="holidayEditId">
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="app.closeHolidayModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="app.saveHoliday()">Save Holiday</button>
+      </div>
+    </div>
   </div>
 </div>
 

@@ -4,10 +4,31 @@
 const STORAGE_KEYS = {
   employees: 'payrollpro_employees',
   attendance: 'payrollpro_attendance',
-  payrolls: 'payrollpro_payrolls',
-  settings: 'payrollpro_settings',
-  session:  'payrollpro_session',
+  payrolls:  'payrollpro_payrolls',
+  leaves:    'payrollpro_leaves',
+  holidays:  'payrollpro_holidays',
+  biometric: 'payrollpro_biometric',
+  settings:  'payrollpro_settings',
+  session:   'payrollpro_session',
 };
+
+const LEAVE_TYPES = { CL:'Casual Leave', SL:'Sick Leave', EL:'Earned Leave', ML:'Maternity Leave', PL:'Paternity Leave', LWP:'Leave Without Pay' };
+const LEAVE_LIMITS = { CL: 12, SL: 7, EL: 15, ML: 180, PL: 15, LWP: 999 };
+
+const INDIA_HOLIDAYS_2025 = [
+  { id:'H001', name:"New Year's Day",     date:'2025-01-01', type:'National',  isPaid:true,  desc:'' },
+  { id:'H002', name:'Republic Day',       date:'2025-01-26', type:'National',  isPaid:true,  desc:'National holiday' },
+  { id:'H003', name:'Holi',               date:'2025-03-14', type:'National',  isPaid:true,  desc:'' },
+  { id:'H004', name:'Good Friday',        date:'2025-04-18', type:'National',  isPaid:true,  desc:'' },
+  { id:'H005', name:'Eid ul-Fitr',        date:'2025-03-31', type:'National',  isPaid:true,  desc:'' },
+  { id:'H006', name:'Ambedkar Jayanti',   date:'2025-04-14', type:'National',  isPaid:true,  desc:'' },
+  { id:'H007', name:'Labour Day',         date:'2025-05-01', type:'National',  isPaid:true,  desc:'International Workers Day' },
+  { id:'H008', name:'Independence Day',   date:'2025-08-15', type:'National',  isPaid:true,  desc:'National holiday' },
+  { id:'H009', name:'Gandhi Jayanti',     date:'2025-10-02', type:'National',  isPaid:true,  desc:'National holiday' },
+  { id:'H010', name:'Dussehra',           date:'2025-10-02', type:'National',  isPaid:true,  desc:'' },
+  { id:'H011', name:'Diwali',             date:'2025-10-20', type:'National',  isPaid:true,  desc:'' },
+  { id:'H012', name:'Christmas Day',      date:'2025-12-25', type:'National',  isPaid:true,  desc:'' },
+];
 
 const AVATAR_COLORS = [
   '#6366F1','#8B5CF6','#EC4899','#F43F5E','#EF4444',
@@ -127,12 +148,17 @@ class PayrollApp {
       employees: [],
       attendance: [],
       payrolls: [],
+      leaves: [],
+      holidays: [],
+      bioLog: [],
       currentPage: 'dashboard',
       attendanceMonth: new Date(),
       payrollMonth: new Date(),
       charts: {},
       editingEmployeeId: null,
       editingAttendanceId: null,
+      bioConfig: { middlewareUrl: 'http://localhost:8000', deviceType: 'mantra' },
+      kioskTimer: null,
     };
 
     this.settings = {
@@ -269,11 +295,18 @@ class PayrollApp {
     this.loadData();
     this.setupNavigation();
     this.updateHeaderInfo();
+    this.updatePendingLeaveBadge();
     this.renderCurrentPage();
     setTimeout(() => {
       this.initDashboardCharts();
       this.renderDashboard();
     }, 80);
+
+    // Modal overlay click-to-close for new modals
+    ['leaveModalOverlay', 'holidayModalOverlay'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('click', e => { if (e.target === el) el.classList.remove('active'); });
+    });
   }
 
   updateUserChip(session) {
@@ -330,12 +363,30 @@ class PayrollApp {
       this.state.employees  = JSON.parse(localStorage.getItem(STORAGE_KEYS.employees)  || 'null') || DEMO_EMPLOYEES;
       this.state.attendance = JSON.parse(localStorage.getItem(STORAGE_KEYS.attendance) || 'null') || generateDemoAttendance(this.state.employees);
       this.state.payrolls   = JSON.parse(localStorage.getItem(STORAGE_KEYS.payrolls)   || '[]');
+      this.state.leaves     = JSON.parse(localStorage.getItem(STORAGE_KEYS.leaves)     || 'null') || this._demoLeaves();
+      this.state.holidays   = JSON.parse(localStorage.getItem(STORAGE_KEYS.holidays)   || 'null') || INDIA_HOLIDAYS_2025;
+      this.state.bioLog     = JSON.parse(localStorage.getItem(STORAGE_KEYS.biometric)  || '[]');
+      const bc = JSON.parse(localStorage.getItem('payrollpro_bioconfig') || 'null');
+      if (bc) this.state.bioConfig = bc;
     } catch {
       this.state.employees  = DEMO_EMPLOYEES;
       this.state.attendance = generateDemoAttendance(this.state.employees);
       this.state.payrolls   = [];
+      this.state.leaves     = this._demoLeaves();
+      this.state.holidays   = INDIA_HOLIDAYS_2025;
+      this.state.bioLog     = [];
     }
     this.saveData();
+  }
+
+  _demoLeaves() {
+    const today = new Date();
+    const emp = this.state.employees.length ? this.state.employees : DEMO_EMPLOYEES;
+    return [
+      { id: uid(), employeeId: emp[0]?.employeeId || 'E001', leaveType: 'CL', fromDate: toDateStr(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 2)), toDate: toDateStr(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 3)), days: 2, reason: 'Personal work', emergencyContact: '', status: 'Pending', appliedOn: toDateStr(today) },
+      { id: uid(), employeeId: emp[1]?.employeeId || 'E002', leaveType: 'SL', fromDate: toDateStr(new Date(today.getFullYear(), today.getMonth(), today.getDate())), toDate: toDateStr(new Date(today.getFullYear(), today.getMonth(), today.getDate())), days: 1, reason: 'Not feeling well', emergencyContact: '', status: 'Approved', appliedOn: toDateStr(new Date(today - 86400000)), approvedBy: 'Admin', approvedOn: toDateStr(today) },
+      { id: uid(), employeeId: emp[2]?.employeeId || 'E003', leaveType: 'EL', fromDate: toDateStr(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 7)), toDate: toDateStr(new Date(today.getFullYear(), today.getMonth(), today.getDate() + 11)), days: 5, reason: 'Family vacation', emergencyContact: '9876543210', status: 'Pending', appliedOn: toDateStr(today) },
+    ];
   }
 
   saveData() {
@@ -343,6 +394,9 @@ class PayrollApp {
       localStorage.setItem(STORAGE_KEYS.employees,  JSON.stringify(this.state.employees));
       localStorage.setItem(STORAGE_KEYS.attendance, JSON.stringify(this.state.attendance));
       localStorage.setItem(STORAGE_KEYS.payrolls,   JSON.stringify(this.state.payrolls));
+      localStorage.setItem(STORAGE_KEYS.leaves,     JSON.stringify(this.state.leaves));
+      localStorage.setItem(STORAGE_KEYS.holidays,   JSON.stringify(this.state.holidays));
+      localStorage.setItem(STORAGE_KEYS.biometric,  JSON.stringify(this.state.bioLog));
     } catch { /* storage full */ }
   }
 
@@ -444,8 +498,11 @@ class PayrollApp {
     document.getElementById(`page-${page}`)?.classList.add('active');
     document.querySelector(`.nav-item[data-page="${page}"]`)?.classList.add('active');
 
-    const titles = { dashboard:'Dashboard', employees:'Employees', attendance:'Attendance',
-                     payroll:'Payroll', reports:'Reports', settings:'Settings' };
+    const titles = {
+      dashboard:'Dashboard', employees:'Employees', attendance:'Attendance',
+      leaves:'Leave & Approval', payroll:'Payroll', reports:'Reports',
+      holidays:'Holiday Calendar', biometric:'Biometric Terminal', settings:'Settings'
+    };
     document.getElementById('pageTitle').textContent = titles[page] || 'PayrollPro';
 
     this.renderCurrentPage();
@@ -456,8 +513,11 @@ class PayrollApp {
       case 'dashboard':  this.renderDashboard(); break;
       case 'employees':  this.renderEmployees(); break;
       case 'attendance': this.renderAttendance(); break;
+      case 'leaves':     this.renderLeaves(); this.renderLeaveSummary(); break;
       case 'payroll':    this.renderPayroll(); break;
       case 'reports':    this.renderReports(); break;
+      case 'holidays':   this.renderHolidays(); break;
+      case 'biometric':  this.renderBiometricPage(); break;
       case 'settings':   this.populateSettingsForm(); this.updateN8NStatus(); break;
     }
   }
@@ -526,6 +586,69 @@ class PayrollApp {
         <div class="earner-salary">${fmtCurrency(emp.monthlySalary, this.settings.currency)}</div>
       </div>`).join('');
 
+    // On Leave Today
+    const onLeaveToday = todayAtt.filter(a => ['Leave','Half Day'].includes(a.status));
+    const onLeaveCount = document.getElementById('onLeaveCount');
+    const onLeaveList  = document.getElementById('onLeaveList');
+    if (onLeaveCount) onLeaveCount.textContent = onLeaveToday.length;
+    if (onLeaveList) {
+      if (!onLeaveToday.length) {
+        onLeaveList.innerHTML = '<div class="empty-state">No one on leave today</div>';
+      } else {
+        onLeaveList.innerHTML = onLeaveToday.map(a => {
+          const emp = employees.find(e => e.employeeId === a.employeeId);
+          if (!emp) return '';
+          const color = avatarColor(emp.employeeName);
+          return `<div class="on-leave-item">
+            <div class="on-leave-avatar" style="background:${color}">${initials(emp.employeeName)}</div>
+            <div class="on-leave-info">
+              <div class="on-leave-name">${emp.employeeName}</div>
+              <div class="on-leave-meta">${emp.department} &bull; ${a.status}</div>
+            </div>
+          </div>`;
+        }).join('');
+      }
+    }
+
+    // Shift stats
+    const now = new Date();
+    const todayLabel = document.getElementById('todayDateLabel');
+    if (todayLabel) todayLabel.textContent = now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'short' });
+    const shiftPresent = todayAtt.filter(a => a.status === 'Present').length;
+    const shiftAbsent  = todayAtt.filter(a => a.status === 'Absent').length;
+    const shiftHalf    = todayAtt.filter(a => a.status === 'Half Day').length;
+    const shiftLeave   = todayAtt.filter(a => a.status === 'Leave').length;
+    const shiftPct     = active.length ? Math.round(((shiftPresent + shiftHalf * 0.5) / active.length) * 100) : 0;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('shiftPresent', shiftPresent);
+    set('shiftAbsent', shiftAbsent);
+    set('shiftHalfDay', shiftHalf);
+    set('shiftOnLeave', shiftLeave);
+    set('shiftBarPct', `${shiftPct}%`);
+    const bar = document.getElementById('shiftBarFill');
+    if (bar) bar.style.width = `${shiftPct}%`;
+
+    // Pending leaves dash
+    const pending = this.state.leaves.filter(l => l.status === 'Pending');
+    const plCount = document.getElementById('pendingLeaveCountDash');
+    const plList  = document.getElementById('pendingLeavesDash');
+    if (plCount) plCount.textContent = pending.length;
+    if (plList) {
+      if (!pending.length) {
+        plList.innerHTML = '<div class="empty-state">No pending leaves</div>';
+      } else {
+        plList.innerHTML = pending.slice(0, 3).map(l => {
+          const emp = employees.find(e => e.employeeId === l.employeeId);
+          return `<div class="pending-leave-item">
+            <span class="pli-name">${emp ? emp.employeeName : l.employeeId}</span>
+            <span class="pli-type">${l.leaveType}</span>
+            <span class="pli-days">${l.days}d</span>
+          </div>`;
+        }).join('');
+      }
+    }
+    this.updatePendingLeaveBadge();
+
     // Dept chart legend
     this.updateDeptChart();
     this.updatePayrollChart();
@@ -554,7 +677,7 @@ class PayrollApp {
 
     this.state.charts.payroll = new Chart(payrollCtx, {
       type: 'bar',
-      data: { labels: [], datasets: [{ label: 'Net Payroll', data: [], backgroundColor: 'rgba(99,102,241,0.85)', borderRadius: 6, borderSkipped: false }] },
+      data: { labels: [], datasets: [{ label: 'Net Payroll', data: [], backgroundColor: 'rgba(124,58,237,0.85)', borderRadius: 6, borderSkipped: false }] },
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -641,6 +764,559 @@ class PayrollApp {
           <div class="dept-count">${data[i]}</div>
         </div>`).join('');
     }
+  }
+
+  /* ===== LEAVE MANAGEMENT ===== */
+  updatePendingLeaveBadge() {
+    const count = this.state.leaves.filter(l => l.status === 'Pending').length;
+    const badge = document.getElementById('pendingLeaveBadge');
+    if (badge) {
+      badge.textContent = count;
+      badge.style.display = count > 0 ? 'inline-flex' : 'none';
+    }
+  }
+
+  renderLeaveSummary() {
+    const session = this.session;
+    const empId = session?.employeeId;
+    const leaves = empId ? this.state.leaves.filter(l => l.employeeId === empId && l.status !== 'Rejected') : this.state.leaves;
+    const year = new Date().getFullYear();
+    const used = (type) => leaves.filter(l => l.leaveType === type && l.fromDate.startsWith(year) && l.status !== 'Rejected').reduce((s, l) => s + (l.days || 1), 0);
+
+    const cl = used('CL'), sl = used('SL'), el = used('EL'), ml = used('ML') + used('PL');
+    const setLeave = (key, u, max) => {
+      const pct = Math.min(100, Math.round((u / max) * 100));
+      const setT = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+      setT(`ls${key}`, `${max - u} / ${max}`);
+      setT(`ls${key}Sub`, `${u} day${u !== 1 ? 's' : ''} used`);
+      const bar = document.getElementById(`ls${key}Bar`);
+      if (bar) bar.style.width = `${pct}%`;
+    };
+    setLeave('CL', cl, 12);
+    setLeave('SL', sl, 7);
+    setLeave('EL', el, 15);
+    const mlEl = document.getElementById('lsML'); if (mlEl) mlEl.textContent = ml;
+    const mlBar = document.getElementById('lsMLBar'); if (mlBar) mlBar.style.width = `${Math.min(100, ml)}%`;
+
+    const pending = this.state.leaves.filter(l => l.status === 'Pending').length;
+    const banner = document.getElementById('pendingLeaveBanner');
+    const bannerTxt = document.getElementById('pendingBannerText');
+    if (banner) banner.style.display = pending > 0 ? 'flex' : 'none';
+    if (bannerTxt) bannerTxt.textContent = `${pending} leave request${pending !== 1 ? 's' : ''} pending approval`;
+  }
+
+  renderLeaves() {
+    const statusFilter = document.getElementById('leaveFilterStatus')?.value || '';
+    const typeFilter   = document.getElementById('leaveFilterType')?.value || '';
+
+    let rows = this.state.leaves;
+    if (statusFilter) rows = rows.filter(l => l.status === statusFilter);
+    if (typeFilter)   rows = rows.filter(l => l.leaveType === typeFilter);
+
+    rows = [...rows].sort((a, b) => (b.appliedOn || '').localeCompare(a.appliedOn || ''));
+
+    const tbody = document.getElementById('leavesTableBody');
+    if (!tbody) return;
+
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No leave requests found</td></tr>'; return; }
+
+    tbody.innerHTML = rows.map(l => {
+      const emp = this.state.employees.find(e => e.employeeId === l.employeeId);
+      const empName = emp ? emp.employeeName : l.employeeId;
+      const color   = emp ? avatarColor(emp.employeeName) : '#6366F1';
+      const init    = emp ? initials(emp.employeeName) : '?';
+      const typeFull = LEAVE_TYPES[l.leaveType] || l.leaveType;
+      const statusCls = l.status === 'Approved' ? 'badge-success' : l.status === 'Rejected' ? 'badge-danger' : 'badge-warning';
+      const actions = l.status === 'Pending'
+        ? `<button class="btn btn-secondary btn-sm" onclick="app.approveLeave('${l.id}')">Approve</button>
+           <button class="btn btn-danger btn-sm" onclick="app.rejectLeave('${l.id}')">Reject</button>`
+        : `<button class="btn btn-secondary btn-sm" onclick="app.deleteLeave('${l.id}')">Delete</button>`;
+      return `<tr>
+        <td><div style="display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;color:white;font-size:11px;font-weight:700;flex-shrink:0">${init}</div>
+          <span style="font-weight:600">${empName}</span>
+        </div></td>
+        <td><span class="badge badge-purple">${l.leaveType}</span> <span class="text-secondary" style="font-size:11.5px">${typeFull}</span></td>
+        <td>${fmtDate(l.fromDate)}</td>
+        <td>${fmtDate(l.toDate)}</td>
+        <td><strong>${l.days}</strong></td>
+        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${l.reason}">${l.reason}</td>
+        <td><span class="badge ${statusCls}">${l.status}</span></td>
+        <td><div style="display:flex;gap:6px">${actions}</div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  filterLeaves(status) {
+    const sel = document.getElementById('leaveFilterStatus');
+    if (sel) sel.value = status || '';
+    this.renderLeaves();
+  }
+
+  openLeaveModal(leaveId) {
+    document.getElementById('leaveModalTitle').textContent = leaveId ? 'Edit Leave Request' : 'Apply for Leave';
+
+    const empSel = document.getElementById('leaveEmployee');
+    if (empSel) {
+      empSel.innerHTML = this.state.employees.filter(e => e.status === 'Active').map(e =>
+        `<option value="${e.employeeId}">${e.employeeName} (${e.employeeId})</option>`
+      ).join('');
+    }
+
+    const today = toDateStr(new Date());
+    if (!leaveId) {
+      ['leaveType','leaveFromDate','leaveToDate','leaveReason','leaveEmergencyContact'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = id.includes('Date') ? today : '';
+      });
+    } else {
+      const l = this.state.leaves.find(x => x.id === leaveId);
+      if (l) {
+        document.getElementById('leaveEmployee').value = l.employeeId;
+        document.getElementById('leaveType').value = l.leaveType;
+        document.getElementById('leaveFromDate').value = l.fromDate;
+        document.getElementById('leaveToDate').value = l.toDate;
+        document.getElementById('leaveReason').value = l.reason;
+        document.getElementById('leaveEmergencyContact').value = l.emergencyContact || '';
+      }
+    }
+    document.getElementById('leaveModalOverlay').classList.add('active');
+  }
+
+  closeLeaveModal() {
+    document.getElementById('leaveModalOverlay').classList.remove('active');
+  }
+
+  saveLeave() {
+    const empId   = document.getElementById('leaveEmployee').value;
+    const type    = document.getElementById('leaveType').value;
+    const from    = document.getElementById('leaveFromDate').value;
+    const to      = document.getElementById('leaveToDate').value;
+    const reason  = document.getElementById('leaveReason').value.trim();
+    const contact = document.getElementById('leaveEmergencyContact').value.trim();
+
+    if (!empId || !from || !to || !reason) { this.toast('Please fill all required fields', 'error'); return; }
+    if (from > to) { this.toast('From date cannot be after To date', 'error'); return; }
+
+    const days = Math.ceil((new Date(to) - new Date(from)) / 86400000) + 1;
+    const leave = { id: uid(), employeeId: empId, leaveType: type, fromDate: from, toDate: to, days, reason, emergencyContact: contact, status: 'Pending', appliedOn: toDateStr(new Date()) };
+    this.state.leaves.unshift(leave);
+    this.saveData();
+    this.closeLeaveModal();
+    this.renderLeaves();
+    this.updatePendingLeaveBadge();
+    this.toast(`Leave request submitted (${days} day${days > 1 ? 's' : ''})`, 'success');
+
+    this.sendToN8N('leave_submit', leave).catch(() => {});
+  }
+
+  approveLeave(id) {
+    const l = this.state.leaves.find(x => x.id === id);
+    if (!l) return;
+    l.status = 'Approved';
+    l.approvedBy = this.session?.name || 'Admin';
+    l.approvedOn = toDateStr(new Date());
+    this.saveData();
+    this.renderLeaves();
+    this.updatePendingLeaveBadge();
+    this.toast('Leave approved', 'success');
+    this.sendToN8N('leave_approve', { id, approvedBy: l.approvedBy, approvedOn: l.approvedOn }).catch(() => {});
+  }
+
+  rejectLeave(id) {
+    const l = this.state.leaves.find(x => x.id === id);
+    if (!l) return;
+    l.status = 'Rejected';
+    l.rejectedOn = toDateStr(new Date());
+    this.saveData();
+    this.renderLeaves();
+    this.updatePendingLeaveBadge();
+    this.toast('Leave rejected', 'info');
+    this.sendToN8N('leave_reject', { id, rejectedOn: l.rejectedOn }).catch(() => {});
+  }
+
+  deleteLeave(id) {
+    this.openConfirmDialog('Delete Leave Request', 'Remove this leave record?', () => {
+      this.state.leaves = this.state.leaves.filter(l => l.id !== id);
+      this.saveData();
+      this.renderLeaves();
+      this.updatePendingLeaveBadge();
+    });
+  }
+
+  /* ===== HOLIDAY MANAGEMENT ===== */
+  renderHolidays() {
+    const year = parseInt(document.getElementById('holidayYearFilter')?.value || new Date().getFullYear());
+
+    const yearSel = document.getElementById('holidayYearFilter');
+    if (yearSel && !yearSel.options.length) {
+      const cur = new Date().getFullYear();
+      for (let y = cur - 1; y <= cur + 2; y++) {
+        yearSel.add(new Object({ value: y, text: String(y) }));
+      }
+      yearSel.value = cur;
+    }
+
+    const rows = this.state.holidays.filter(h => h.date.startsWith(String(year))).sort((a, b) => a.date.localeCompare(b.date));
+    const today = toDateStr(new Date());
+    const thisMonth = today.slice(0, 7);
+
+    const total = rows.length;
+    const paid = rows.filter(h => h.isPaid).length;
+    const unpaid = total - paid;
+    const upcoming = rows.filter(h => h.date >= today && h.date.startsWith(thisMonth)).length;
+
+    const set = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+    set('hstatTotal', total); set('hstatPaid', paid); set('hstatUnpaid', unpaid); set('hstatUpcoming', upcoming);
+
+    const tbody = document.getElementById('holidaysTableBody');
+    if (!tbody) return;
+    if (!rows.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">No holidays for this year</td></tr>'; return; }
+
+    const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    tbody.innerHTML = rows.map(h => {
+      const d = new Date(h.date + 'T00:00:00');
+      const isPast = h.date < today;
+      const typeClr = h.type === 'National' ? 'badge-purple' : h.type === 'Regional' ? 'badge-info' : 'badge-gray';
+      return `<tr ${isPast ? 'style="opacity:0.55"' : ''}>
+        <td style="font-weight:600">${fmtDate(h.date)}</td>
+        <td>${h.name}${h.desc ? `<br><span class="text-secondary" style="font-size:11px">${h.desc}</span>` : ''}</td>
+        <td><span class="badge ${typeClr}">${h.type}</span></td>
+        <td>${DAYS[d.getDay()]}</td>
+        <td>
+          <label class="holiday-paid-toggle" title="Toggle paid/unpaid">
+            <input type="checkbox" ${h.isPaid ? 'checked' : ''} onchange="app.toggleHolidayPaid('${h.id}', this.checked)">
+            <div class="toggle-track"><div class="toggle-thumb"></div></div>
+            <span>${h.isPaid ? 'Paid' : 'Unpaid'}</span>
+          </label>
+        </td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="app.openHolidayModal('${h.id}')">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="app.deleteHoliday('${h.id}')">Delete</button>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  openHolidayModal(id) {
+    const h = id ? this.state.holidays.find(x => x.id === id) : null;
+    document.getElementById('holidayModalTitle').textContent = h ? 'Edit Holiday' : 'Add Holiday';
+    document.getElementById('holidayEditId').value = id || '';
+    document.getElementById('holidayName').value = h?.name || '';
+    document.getElementById('holidayDate').value = h?.date || toDateStr(new Date());
+    document.getElementById('holidayType').value = h?.type || 'National';
+    document.getElementById('holidayIsPaid').value = h ? String(h.isPaid) : 'true';
+    document.getElementById('holidayDesc').value = h?.desc || '';
+    document.getElementById('holidayModalOverlay').classList.add('active');
+  }
+
+  closeHolidayModal() {
+    document.getElementById('holidayModalOverlay').classList.remove('active');
+  }
+
+  saveHoliday() {
+    const editId = document.getElementById('holidayEditId').value;
+    const name   = document.getElementById('holidayName').value.trim();
+    const date   = document.getElementById('holidayDate').value;
+    const type   = document.getElementById('holidayType').value;
+    const isPaid = document.getElementById('holidayIsPaid').value === 'true';
+    const desc   = document.getElementById('holidayDesc').value.trim();
+
+    if (!name || !date) { this.toast('Name and date are required', 'error'); return; }
+
+    if (editId) {
+      const h = this.state.holidays.find(x => x.id === editId);
+      if (h) Object.assign(h, { name, date, type, isPaid, desc });
+    } else {
+      this.state.holidays.push({ id: uid(), name, date, type, isPaid, desc });
+    }
+    this.saveData();
+    this.closeHolidayModal();
+    this.renderHolidays();
+    this.toast(`Holiday ${editId ? 'updated' : 'added'}: ${name}`, 'success');
+    this.sendToN8N('holiday_upsert', { id: editId || uid(), name, date, type, isPaid, desc }).catch(() => {});
+  }
+
+  toggleHolidayPaid(id, isPaid) {
+    const h = this.state.holidays.find(x => x.id === id);
+    if (h) {
+      h.isPaid = isPaid;
+      this.saveData();
+      this.renderHolidays();
+      this.toast(`${h.name} marked as ${isPaid ? 'Paid' : 'Unpaid'}`, 'info');
+    }
+  }
+
+  deleteHoliday(id) {
+    const h = this.state.holidays.find(x => x.id === id);
+    this.openConfirmDialog('Delete Holiday', `Remove "${h?.name}"?`, () => {
+      this.state.holidays = this.state.holidays.filter(x => x.id !== id);
+      this.saveData();
+      this.renderHolidays();
+      this.sendToN8N('holiday_delete', { id }).catch(() => {});
+    });
+  }
+
+  /* ===== BIOMETRIC TERMINAL ===== */
+  renderBiometricPage() {
+    const cfg = this.state.bioConfig;
+    const urlEl = document.getElementById('bioMiddlewareUrl');
+    const typeEl = document.getElementById('bioDeviceType');
+    if (urlEl) urlEl.value = cfg.middlewareUrl || 'http://localhost:8000';
+    if (typeEl) typeEl.value = cfg.deviceType || 'mantra';
+
+    const empSel = document.getElementById('bioEnrollEmployee');
+    if (empSel) {
+      empSel.innerHTML = this.state.employees.filter(e => e.status === 'Active').map(e =>
+        `<option value="${e.employeeId}">${e.employeeName} (${e.employeeId})</option>`
+      ).join('');
+    }
+
+    this.renderBioEnrolled();
+    this.renderBioLog();
+  }
+
+  renderBioEnrolled() {
+    const enrolled = this.state.employees.filter(e => e.biometricDeviceId);
+    const count = document.getElementById('enrolledCount');
+    if (count) count.textContent = `${enrolled.length} enrolled`;
+
+    const list = document.getElementById('bioEnrolledList');
+    if (!list) return;
+    if (!enrolled.length) { list.innerHTML = '<div class="empty-state">No employees enrolled yet</div>'; return; }
+    list.innerHTML = enrolled.map(e => `
+      <div class="bio-enrolled-item">
+        <div class="on-leave-avatar" style="background:${avatarColor(e.employeeName)};width:28px;height:28px;font-size:10px">${initials(e.employeeName)}</div>
+        <span class="bio-enrolled-name">${e.employeeName}</span>
+        <span class="bio-enrolled-id">${e.biometricDeviceId}</span>
+        <button class="bio-enrolled-del" onclick="app.removeBiometricEnrollment('${e.employeeId}')" title="Remove">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>`).join('');
+  }
+
+  saveBioConfig() {
+    this.state.bioConfig.middlewareUrl = document.getElementById('bioMiddlewareUrl').value.trim() || 'http://localhost:8000';
+    this.state.bioConfig.deviceType = document.getElementById('bioDeviceType').value;
+    localStorage.setItem('payrollpro_bioconfig', JSON.stringify(this.state.bioConfig));
+    this.toast('Biometric config saved', 'success');
+  }
+
+  async testBiometricDevice() {
+    const url = document.getElementById('bioMiddlewareUrl').value.trim() || this.state.bioConfig.middlewareUrl;
+    const badge = document.getElementById('bioDeviceStatus');
+    if (badge) { badge.textContent = 'Testing...'; badge.className = 'badge badge-warning'; }
+    try {
+      const r = await fetch(`${url}/mfs100/info`, { method: 'GET', signal: AbortSignal.timeout(3000) });
+      if (r.ok) {
+        if (badge) { badge.textContent = 'Connected'; badge.className = 'badge badge-success'; }
+        this.toast('Device connected!', 'success');
+      } else throw new Error('Bad status');
+    } catch {
+      if (badge) { badge.textContent = 'Disconnected'; badge.className = 'badge badge-danger'; }
+      this.toast('Device not reachable. Ensure the middleware is running on ' + url, 'warning');
+    }
+  }
+
+  enrollBiometric() {
+    const empId  = document.getElementById('bioEnrollEmployee').value;
+    const devId  = document.getElementById('bioDeviceUserId').value.trim();
+    if (!empId || !devId) { this.toast('Select employee and enter device user ID', 'error'); return; }
+    const emp = this.state.employees.find(e => e.employeeId === empId);
+    if (!emp) return;
+    emp.biometricDeviceId = devId;
+    this.saveData();
+    document.getElementById('bioDeviceUserId').value = '';
+    this.renderBioEnrolled();
+    this.toast(`${emp.employeeName} enrolled with ID: ${devId}`, 'success');
+    this.sendToN8N('biometric_enroll', { employeeId: empId, deviceUserId: devId }).catch(() => {});
+  }
+
+  removeBiometricEnrollment(empId) {
+    const emp = this.state.employees.find(e => e.employeeId === empId);
+    if (!emp) return;
+    delete emp.biometricDeviceId;
+    this.saveData();
+    this.renderBioEnrolled();
+    this.toast(`Enrollment removed for ${emp.employeeName}`, 'info');
+  }
+
+  renderBioLog() {
+    const tbody = document.getElementById('bioLogTable');
+    if (!tbody) return;
+    const logs = [...this.state.bioLog].sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || '')).slice(0, 20);
+    if (!logs.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No biometric records yet</td></tr>'; return; }
+    tbody.innerHTML = logs.map(l => {
+      const emp = this.state.employees.find(e => e.employeeId === l.employeeId);
+      const cfg = STATUS_CONFIG[l.status] || STATUS_CONFIG['Present'];
+      return `<tr>
+        <td>${emp ? emp.employeeName : l.employeeId}</td>
+        <td>${fmtDate(l.date)}</td>
+        <td>${l.time || '--'}</td>
+        <td><span class="badge ${cfg.badge}">${l.status || 'Present'}</span></td>
+        <td><code style="font-size:11px;color:var(--color-text-muted)">${l.deviceUserId || '--'}</code></td>
+      </tr>`;
+    }).join('');
+  }
+
+  launchBiometricKiosk() {
+    const kiosk = document.getElementById('kioskOverlay');
+    if (!kiosk) return;
+    kiosk.style.display = 'flex';
+    this._startKioskClock();
+    this._resetKiosk();
+  }
+
+  closeKiosk() {
+    document.getElementById('kioskOverlay').style.display = 'none';
+    if (this.state.kioskTimer) { clearInterval(this.state.kioskTimer); this.state.kioskTimer = null; }
+  }
+
+  _startKioskClock() {
+    const tick = () => {
+      const now = new Date();
+      const timeEl = document.getElementById('kioskTime');
+      const dateEl = document.getElementById('kioskDate');
+      if (timeEl) timeEl.textContent = now.toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: true });
+      if (dateEl) dateEl.textContent = now.toLocaleDateString('en-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    };
+    tick();
+    this.state.kioskTimer = setInterval(tick, 1000);
+  }
+
+  _resetKiosk() {
+    const title = document.getElementById('kioskTitle');
+    const sub   = document.getElementById('kioskSubtitle');
+    const icon  = document.getElementById('kioskFpIcon');
+    const res   = document.getElementById('kioskResult');
+    const btn   = document.getElementById('kioskScanBtn');
+    if (title) title.textContent = 'Fingerprint Attendance';
+    if (sub)   sub.textContent = 'Touch the fingerprint scanner to mark attendance';
+    if (icon)  { icon.className = 'kiosk-fp-icon'; }
+    if (res)   res.style.display = 'none';
+    if (btn)   { btn.disabled = false; btn.textContent = ''; btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4"/></svg> Press &amp; Hold Scanner'; }
+  }
+
+  async triggerBiometricScan() {
+    const icon  = document.getElementById('kioskFpIcon');
+    const title = document.getElementById('kioskTitle');
+    const sub   = document.getElementById('kioskSubtitle');
+    const btn   = document.getElementById('kioskScanBtn');
+
+    if (btn)   { btn.disabled = true; btn.textContent = 'Scanning…'; }
+    if (icon)  icon.className = 'kiosk-fp-icon scanning';
+    if (title) title.textContent = 'Scanning…';
+    if (sub)   sub.textContent = 'Keep finger on scanner';
+
+    try {
+      const url = this.state.bioConfig.middlewareUrl || 'http://localhost:8000';
+      const r = await fetch(`${url}/mfs100/capture`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ timeout: 5000 }),
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!r.ok) throw new Error('Device error');
+      const data = await r.json();
+      const deviceUserId = data.userId || data.id || data.fingerprintId;
+      if (!deviceUserId) throw new Error('No ID returned');
+      this._handleBiometricMatch(deviceUserId);
+    } catch (err) {
+      if (err.message === 'No ID returned') {
+        this._kioskNoMatch();
+      } else {
+        this._kioskDeviceError();
+      }
+    }
+  }
+
+  _handleBiometricMatch(deviceUserId) {
+    const emp = this.state.employees.find(e => e.biometricDeviceId === deviceUserId);
+    if (!emp) {
+      this._kioskNoMatch(deviceUserId);
+      return;
+    }
+    this._kioskSuccess(emp);
+    this._recordBiometricAttendance(emp);
+  }
+
+  _recordBiometricAttendance(emp) {
+    const today = toDateStr(new Date());
+    const time  = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', hour12: true });
+    const existing = this.state.attendance.find(a => a.employeeId === emp.employeeId && a.date === today);
+    if (!existing) {
+      this.state.attendance.push({ id: uid(), employeeId: emp.employeeId, date: today, status: 'Present', hoursWorked: 8, overtimeHours: 0, lateMinutes: 0, remarks: 'Biometric' });
+    }
+    this.state.bioLog.unshift({ id: uid(), employeeId: emp.employeeId, deviceUserId: emp.biometricDeviceId, date: today, time, status: 'Present', timestamp: new Date().toISOString() });
+    this.saveData();
+    this.sendToN8N('biometric_match', { employeeId: emp.employeeId, deviceUserId: emp.biometricDeviceId, date: today, time }).catch(() => {});
+  }
+
+  _kioskSuccess(emp) {
+    const icon  = document.getElementById('kioskFpIcon');
+    const title = document.getElementById('kioskTitle');
+    const sub   = document.getElementById('kioskSubtitle');
+    const res   = document.getElementById('kioskResult');
+    const resAv = document.getElementById('kioskResultAvatar');
+    const resNm = document.getElementById('kioskResultName');
+    const resMt = document.getElementById('kioskResultMeta');
+    const resSt = document.getElementById('kioskResultStatus');
+
+    if (icon)  icon.className = 'kiosk-fp-icon success';
+    if (title) title.textContent = 'Attendance Marked!';
+    if (sub)   sub.textContent = 'Successfully recognized and recorded';
+    if (res)   { res.style.display = 'flex'; }
+    if (resAv) { resAv.textContent = initials(emp.employeeName); resAv.style.background = avatarColor(emp.employeeName); }
+    if (resNm) resNm.textContent = emp.employeeName;
+    if (resMt) resMt.textContent = `${emp.department} • ${emp.role || emp.employeeId}`;
+    if (resSt) { resSt.textContent = 'Marked Present'; resSt.className = 'kiosk-result-status'; }
+
+    this._addKioskLog(emp.employeeName, 'Present');
+    setTimeout(() => this._resetKiosk(), 3500);
+  }
+
+  _kioskNoMatch(deviceUserId) {
+    const icon  = document.getElementById('kioskFpIcon');
+    const title = document.getElementById('kioskTitle');
+    const sub   = document.getElementById('kioskSubtitle');
+    const res   = document.getElementById('kioskResult');
+    const resSt = document.getElementById('kioskResultStatus');
+    const resNm = document.getElementById('kioskResultName');
+
+    if (icon)  icon.className = 'kiosk-fp-icon error';
+    if (title) title.textContent = 'Not Recognized';
+    if (sub)   sub.textContent = deviceUserId ? `Device ID: ${deviceUserId} — not enrolled` : 'Fingerprint not found in database';
+    if (res)   res.style.display = 'flex';
+    const resAv = document.getElementById('kioskResultAvatar');
+    if (resAv) { resAv.textContent = '?'; resAv.style.background = '#6B7280'; }
+    if (resNm) resNm.textContent = 'Unknown Employee';
+    if (resSt) { resSt.textContent = 'Not Enrolled'; resSt.className = 'kiosk-result-status error'; }
+
+    this._addKioskLog('Unknown', 'Not Recognized');
+    setTimeout(() => this._resetKiosk(), 3000);
+  }
+
+  _kioskDeviceError() {
+    const icon  = document.getElementById('kioskFpIcon');
+    const title = document.getElementById('kioskTitle');
+    const sub   = document.getElementById('kioskSubtitle');
+    const btn   = document.getElementById('kioskScanBtn');
+
+    if (icon)  icon.className = 'kiosk-fp-icon error';
+    if (title) title.textContent = 'Device Error';
+    if (sub)   sub.textContent = 'Could not connect to fingerprint scanner. Check device connection.';
+    if (btn)   { btn.disabled = false; btn.textContent = 'Try Again'; }
+  }
+
+  _addKioskLog(name, status) {
+    const log  = document.getElementById('kioskLog');
+    if (!log) return;
+    const time = new Date().toLocaleTimeString('en-IN', { hour:'2-digit', minute:'2-digit', second:'2-digit', hour12: false });
+    const item = document.createElement('div');
+    item.className = 'kiosk-log-item';
+    item.innerHTML = `<span class="kl-time">${time}</span><span class="kl-name">${name}</span><span>${status}</span>`;
+    log.insertBefore(item, log.firstChild);
+    while (log.children.length > 5) log.removeChild(log.lastChild);
   }
 
   /* ===== EMPLOYEES ===== */
