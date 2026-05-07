@@ -1,6 +1,8 @@
 'use strict';
 
 /* ===== CONSTANTS ===== */
+const N8N_WEBHOOK = 'https://hotbotst.app.n8n.cloud/webhook/payrollpro';
+
 const STORAGE_KEYS = {
   employees: 'payrollpro_employees',
   attendance: 'payrollpro_attendance',
@@ -169,7 +171,6 @@ class PayrollApp {
       shiftHours: 8,
       otMultiplier: 1.5,
       pfRate: 12,
-      webhookUrl: 'https://hotbotst.app.n8n.cloud/webhook/payrollpro',
     };
 
     this.init();
@@ -189,35 +190,13 @@ class PayrollApp {
   showLoginScreen() {
     document.getElementById('loginScreen').style.display = 'flex';
     document.getElementById('app').style.display = 'none';
-    if (this.settings.webhookUrl) {
-      this.showLoginPanel();
-    } else {
-      this.showSetupPanel();
-    }
-  }
-
-  showSetupPanel() {
-    document.getElementById('setupPanel').style.display = 'block';
-    document.getElementById('loginPanel').style.display = 'none';
-    const el = document.getElementById('setupWebhookUrl');
-    if (el) el.value = this.settings.webhookUrl || '';
+    this.showLoginPanel();
   }
 
   showLoginPanel() {
     document.getElementById('setupPanel').style.display = 'none';
     document.getElementById('loginPanel').style.display = 'block';
     setTimeout(() => document.getElementById('loginEmail')?.focus(), 100);
-  }
-
-  setupContinue() {
-    const url = document.getElementById('setupWebhookUrl').value.trim();
-    if (!url || !url.startsWith('http')) {
-      this.shakeInput('setupWebhookUrl');
-      return;
-    }
-    this.settings.webhookUrl = url;
-    localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(this.settings));
-    this.showLoginPanel();
   }
 
   shakeInput(id) {
@@ -245,7 +224,7 @@ class PayrollApp {
     spinner.style.display = 'inline-block';
 
     try {
-      const res = await fetch(this.settings.webhookUrl, {
+      const res = await fetch(N8N_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -263,7 +242,6 @@ class PayrollApp {
           role: json.role,
           name: json.name,
           email,
-          webhookUrl: this.settings.webhookUrl,
         };
         localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(session));
         this.showApp(session);
@@ -287,7 +265,6 @@ class PayrollApp {
     document.getElementById('app').style.display = 'flex';
 
     this.session = session;
-    if (session.webhookUrl) this.settings.webhookUrl = session.webhookUrl;
 
     this.updateUserChip(session);
     this.loadData();
@@ -413,9 +390,8 @@ class PayrollApp {
     const shiftHours   = parseInt(document.getElementById('settingShiftHours').value) || 8;
     const otMultiplier = parseFloat(document.getElementById('settingOTMultiplier').value) || 1.5;
     const pfRate       = parseFloat(document.getElementById('settingPFRate').value) || 12;
-    const webhookUrl   = document.getElementById('settingWebhookUrl').value.trim();
 
-    this.settings = { companyName, currency, payrollDay, workingDays, shiftHours, otMultiplier, pfRate, webhookUrl };
+    this.settings = { companyName, currency, payrollDay, workingDays, shiftHours, otMultiplier, pfRate };
     localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(this.settings));
     this.updateHeaderInfo();
     this.updateN8NStatus();
@@ -423,7 +399,7 @@ class PayrollApp {
   }
 
   resetSettings() {
-    this.settings = { companyName:'My Company', currency:'INR', payrollDay:31, workingDays:26, shiftHours:8, otMultiplier:1.5, pfRate:12, webhookUrl:'https://hotbotst.app.n8n.cloud/webhook/payrollpro' };
+    this.settings = { companyName:'My Company', currency:'INR', payrollDay:31, workingDays:26, shiftHours:8, otMultiplier:1.5, pfRate:12 };
     this.populateSettingsForm();
     this.toast('Settings reset to defaults', 'info');
   }
@@ -436,7 +412,6 @@ class PayrollApp {
     document.getElementById('settingShiftHours').value   = this.settings.shiftHours;
     document.getElementById('settingOTMultiplier').value = this.settings.otMultiplier;
     document.getElementById('settingPFRate').value       = this.settings.pfRate;
-    document.getElementById('settingWebhookUrl').value   = this.settings.webhookUrl;
   }
 
   updateHeaderInfo() {
@@ -457,20 +432,12 @@ class PayrollApp {
   }
 
   updateN8NStatus() {
-    const connected = !!this.settings.webhookUrl;
-    const dot = document.getElementById('statusIndicator');
-    const txt = document.getElementById('statusText');
+    const dot  = document.getElementById('statusIndicator');
+    const txt  = document.getElementById('statusText');
     const sdot = document.getElementById('n8nStatusDot');
     const stxt = document.getElementById('n8nStatusText');
-
-    if (dot) {
-      dot.className = `status-indicator ${connected ? 'connected' : 'disconnected'}`;
-      txt.textContent = connected ? 'Connected' : 'Not Connected';
-    }
-    if (sdot) {
-      sdot.className = `status-dot ${connected ? 'connected' : 'disconnected'}`;
-      stxt.textContent = connected ? 'Connected' : 'Not Connected';
-    }
+    if (dot)  { dot.className = 'status-indicator connected'; txt.textContent = 'Connected'; }
+    if (sdot) { sdot.className = 'status-dot connected'; stxt.textContent = 'Connected'; }
   }
 
   /* ===== NAVIGATION ===== */
@@ -2112,8 +2079,6 @@ class PayrollApp {
 
   /* ===== N8N WEBHOOK ===== */
   async sendToN8N(action, data) {
-    if (!this.settings.webhookUrl) return;
-
     const payload = {
       action,
       source: 'payrollpro',
@@ -2123,7 +2088,7 @@ class PayrollApp {
     };
 
     try {
-      const res = await fetch(this.settings.webhookUrl, {
+      const res = await fetch(N8N_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -2152,27 +2117,20 @@ class PayrollApp {
   }
 
   async testWebhook() {
-    const url = document.getElementById('settingWebhookUrl').value.trim();
-    if (!url) { this.toast('Please enter a webhook URL first', 'error'); return; }
-
     this.toast('Testing connection...', 'info');
-
     try {
-      const res = await fetch(url, {
+      const res = await fetch(N8N_WEBHOOK, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'webhook_test', source: 'payrollpro', timestamp: new Date().toISOString() }),
       });
-
       if (res.ok) {
-        this.settings.webhookUrl = url;
-        this.updateN8NStatus();
         this.toast('N8N connected successfully!', 'success');
       } else {
         this.toast(`Connection failed: HTTP ${res.status}`, 'error');
       }
-    } catch (err) {
-      this.toast('Connection failed. Check the URL and try again.', 'error');
+    } catch {
+      this.toast('Connection failed. Network error.', 'error');
     }
   }
 

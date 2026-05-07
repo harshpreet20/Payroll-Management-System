@@ -28,35 +28,8 @@
       <span class="login-logo-text">PayrollPro</span>
     </div>
 
-    <!-- ── Step 1: Webhook Setup ── -->
-    <div id="setupPanel">
-      <div class="login-heading">
-        <div class="login-step-badge">Step 1 of 2</div>
-        <h1>Connect N8N Workflow</h1>
-        <p>Enter your N8N webhook URL to power this application.</p>
-      </div>
-
-      <div class="login-form-group">
-        <label>N8N Webhook URL</label>
-        <input type="url" id="setupWebhookUrl" class="login-input" placeholder="https://your-n8n.com/webhook/payrollpro" autocomplete="off">
-        <p class="login-hint">All authentication and data is handled by your N8N workflow.</p>
-      </div>
-
-      <button class="login-btn" id="setupContinueBtn" onclick="app.setupContinue()">
-        <span>Continue to Sign In</span>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-      </button>
-
-      <div class="login-divider">
-        <span>What is this?</span>
-      </div>
-      <p class="login-help-text">
-        PayrollPro uses <strong>N8N</strong> as its backend. You need a running N8N instance with the PayrollPro workflow imported. The webhook URL connects this app to your workflow for authentication and all data operations.
-      </p>
-    </div>
-
-    <!-- ── Step 2: Sign In ── -->
-    <div id="loginPanel" style="display:none">
+    <!-- ── Sign In ── -->
+    <div id="loginPanel">
       <div class="login-heading">
         <h1>Welcome back</h1>
         <p>Sign in to your PayrollPro workspace.</p>
@@ -85,10 +58,6 @@
         </button>
       </form>
 
-      <button class="login-back-btn" onclick="app.showSetupPanel()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-        Change N8N webhook
-      </button>
     </div>
 
     <!-- N8N badge -->
@@ -694,8 +663,8 @@
             <div class="settings-form">
               <div class="form-group">
                 <label>Webhook URL</label>
-                <input type="url" class="form-input" id="settingWebhookUrl" placeholder="https://your-n8n-instance.com/webhook/...">
-                <p class="form-hint">All payroll data is sent to this endpoint as JSON payloads</p>
+                <div class="form-input" style="background:var(--color-bg-secondary);color:var(--color-text-secondary);font-size:0.8rem;word-break:break-all;cursor:default;">https://hotbotst.app.n8n.cloud/webhook/payrollpro</div>
+                <p class="form-hint">Powered by N8N on hotbotst.app.n8n.cloud</p>
               </div>
               <div class="n8n-status-display">
                 <div class="status-badge">
