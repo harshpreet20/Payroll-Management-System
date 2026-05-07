@@ -169,7 +169,7 @@ class PayrollApp {
       shiftHours: 8,
       otMultiplier: 1.5,
       pfRate: 12,
-      webhookUrl: '',
+      webhookUrl: 'https://hotbotst.app.n8n.cloud/webhook/payrollpro',
     };
 
     this.init();
@@ -425,7 +425,7 @@ class PayrollApp {
   }
 
   resetSettings() {
-    this.settings = { companyName:'My Company', currency:'INR', payrollDay:31, workingDays:26, shiftHours:8, otMultiplier:1.5, pfRate:12, webhookUrl:'' };
+    this.settings = { companyName:'My Company', currency:'INR', payrollDay:31, workingDays:26, shiftHours:8, otMultiplier:1.5, pfRate:12, webhookUrl:'https://hotbotst.app.n8n.cloud/webhook/payrollpro' };
     this.populateSettingsForm();
     this.toast('Settings reset to defaults', 'info');
   }
