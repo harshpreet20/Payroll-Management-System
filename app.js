@@ -194,7 +194,6 @@ class PayrollApp {
   }
 
   showLoginPanel() {
-    document.getElementById('setupPanel').style.display = 'none';
     document.getElementById('loginPanel').style.display = 'block';
     setTimeout(() => document.getElementById('loginEmail')?.focus(), 100);
   }
