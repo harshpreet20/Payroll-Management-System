@@ -1,272 +1,256 @@
-/* eslint-env browser */
+//
+// Browser equivalents of the skia-canvas convenience initializers and polyfills for
+// the Canvas object’s newPage & export methods
+//
+// OPTIONAL DEPENDENCY: be sure to include JSZip in your project bundle if you want to
+// make use of multi-page toFile() downloads
+//
 
-/**
- * This is the web browser implementation of `debug()`.
- */
+"use strict"
 
-exports.formatArgs = formatArgs;
-exports.save = save;
-exports.load = load;
-exports.useColors = useColors;
-exports.storage = localstorage();
-exports.destroy = (() => {
-	let warned = false;
+const _toURL_ = Symbol.for("toDataURL")
 
-	return () => {
-		if (!warned) {
-			warned = true;
-			console.warn('Instance method `debug.destroy()` is deprecated and no longer does anything. It will be removed in the next major version of `debug`.');
-		}
-	};
-})();
-
-/**
- * Colors.
- */
-
-exports.colors = [
-	'#0000CC',
-	'#0000FF',
-	'#0033CC',
-	'#0033FF',
-	'#0066CC',
-	'#0066FF',
-	'#0099CC',
-	'#0099FF',
-	'#00CC00',
-	'#00CC33',
-	'#00CC66',
-	'#00CC99',
-	'#00CCCC',
-	'#00CCFF',
-	'#3300CC',
-	'#3300FF',
-	'#3333CC',
-	'#3333FF',
-	'#3366CC',
-	'#3366FF',
-	'#3399CC',
-	'#3399FF',
-	'#33CC00',
-	'#33CC33',
-	'#33CC66',
-	'#33CC99',
-	'#33CCCC',
-	'#33CCFF',
-	'#6600CC',
-	'#6600FF',
-	'#6633CC',
-	'#6633FF',
-	'#66CC00',
-	'#66CC33',
-	'#9900CC',
-	'#9900FF',
-	'#9933CC',
-	'#9933FF',
-	'#99CC00',
-	'#99CC33',
-	'#CC0000',
-	'#CC0033',
-	'#CC0066',
-	'#CC0099',
-	'#CC00CC',
-	'#CC00FF',
-	'#CC3300',
-	'#CC3333',
-	'#CC3366',
-	'#CC3399',
-	'#CC33CC',
-	'#CC33FF',
-	'#CC6600',
-	'#CC6633',
-	'#CC9900',
-	'#CC9933',
-	'#CCCC00',
-	'#CCCC33',
-	'#FF0000',
-	'#FF0033',
-	'#FF0066',
-	'#FF0099',
-	'#FF00CC',
-	'#FF00FF',
-	'#FF3300',
-	'#FF3333',
-	'#FF3366',
-	'#FF3399',
-	'#FF33CC',
-	'#FF33FF',
-	'#FF6600',
-	'#FF6633',
-	'#FF9900',
-	'#FF9933',
-	'#FFCC00',
-	'#FFCC33'
-];
-
-/**
- * Currently only WebKit-based Web Inspectors, Firefox >= v31,
- * and the Firebug extension (any Firefox version) are known
- * to support "%c" CSS customizations.
- *
- * TODO: add a `localStorage` variable to explicitly enable/disable colors
- */
-
-// eslint-disable-next-line complexity
-function useColors() {
-	// NB: In an Electron preload script, document will be defined but not fully
-	// initialized. Since we know we're in Chrome, we'll just detect this case
-	// explicitly
-	if (typeof window !== 'undefined' && window.process && (window.process.type === 'renderer' || window.process.__nwjs)) {
-		return true;
-	}
-
-	// Internet Explorer and Edge do not support colors.
-	if (typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/(edge|trident)\/(\d+)/)) {
-		return false;
-	}
-
-	let m;
-
-	// Is webkit? http://stackoverflow.com/a/16459606/376773
-	// document is undefined in react-native: https://github.com/facebook/react-native/pull/1632
-	// eslint-disable-next-line no-return-assign
-	return (typeof document !== 'undefined' && document.documentElement && document.documentElement.style && document.documentElement.style.WebkitAppearance) ||
-		// Is firebug? http://stackoverflow.com/a/398120/376773
-		(typeof window !== 'undefined' && window.console && (window.console.firebug || (window.console.exception && window.console.table))) ||
-		// Is firefox >= v31?
-		// https://developer.mozilla.org/en-US/docs/Tools/Web_Console#Styling_messages
-		(typeof navigator !== 'undefined' && navigator.userAgent && (m = navigator.userAgent.toLowerCase().match(/firefox\/(\d+)/)) && parseInt(m[1], 10) >= 31) ||
-		// Double check webkit in userAgent just in case we are in a worker
-		(typeof navigator !== 'undefined' && navigator.userAgent && navigator.userAgent.toLowerCase().match(/applewebkit\/(\d+)/));
+const loadImage = src => {
+  let img = Object.assign(new Image(), {crossOrigin:'Anonymous', src})
+  return img.decode().then(() => img)
 }
 
-/**
- * Colorize log arguments if enabled.
- *
- * @api public
- */
+const loadImageData = (src, width, height, settings) => fetch(src)
+  .then(resp => resp.arrayBuffer())
+  .then(buf => new ImageData(new Uint8ClampedArray(buf), width, height, settings))
 
-function formatArgs(args) {
-	args[0] = (this.useColors ? '%c' : '') +
-		this.namespace +
-		(this.useColors ? ' %c' : ' ') +
-		args[0] +
-		(this.useColors ? '%c ' : ' ') +
-		'+' + module.exports.humanize(this.diff);
+class Canvas{
+  constructor(width, height){
+    let elt = document.createElement('canvas'),
+        pages = []
 
-	if (!this.useColors) {
-		return;
-	}
+    for (var [prop, get] of Object.entries({
+      png: () => asBuffer(elt, 'image/png'),
+      jpg: () => asBuffer(elt, 'image/jpeg'),
+      pages: () => pages.concat(elt).map(c => c.getContext("2d")),
+    })) Object.defineProperty(elt, prop, {get})
 
-	const c = 'color: ' + this.color;
-	args.splice(1, 0, c, 'color: inherit');
+    return Object.assign(elt, {
+      width, height,
 
-	// The final "%c" is somewhat tricky, because there could be other
-	// arguments passed either before or after the %c, so we need to
-	// figure out the correct index to insert the CSS into
-	let index = 0;
-	let lastC = 0;
-	args[0].replace(/%[a-zA-Z%]/g, match => {
-		if (match === '%%') {
-			return;
-		}
-		index++;
-		if (match === '%c') {
-			// We only are interested in the *last* %c
-			// (the user may have provided their own)
-			lastC = index;
-		}
-	});
+      newPage(...size){
+        var {width, height} = elt,
+            page = Object.assign(document.createElement('canvas'), {width, height})
+        page.getContext("2d").drawImage(elt, 0, 0)
+        pages.push(page)
 
-	args.splice(lastC, 0, c);
+        var [width, height] = size.length ? size : [width, height]
+        return Object.assign(elt, {width, height}).getContext("2d")
+      },
+
+      saveAs(){
+        throw Error("Canvas.saveAs() has been renamed to Canvas.toFile")
+      },
+
+      toFile(filename, args){
+        args = typeof args=='number' ? {quality:args} : args
+        let opts = exportOptions(this.pages, {filename, ...args}),
+            {pattern, padding, mime, quality, matte, density, archive} = opts,
+            pages = atScale(opts.pages, density);
+        return padding==undefined ? asDownload(pages[0], mime, quality, matte, filename)
+                                  : asZipDownload(pages, mime, quality, matte, archive, pattern, padding)
+      },
+
+      toBuffer(extension="png", args={}){
+        args = typeof args=='number' ? {quality:args} : args
+        let opts = exportOptions(this.pages, {extension, ...args}),
+            {mime, quality, matte, pages, density} = opts,
+            canvas = atScale(pages, density, matte)[0]
+        return asBuffer(canvas, mime, quality, matte)
+      },
+
+      toURL(extension="png", args={}){
+        args = typeof args=='number' ? {quality:args} : args
+        let opts = exportOptions(this.pages, {extension, ...args}),
+            {mime, quality, matte, pages, density} = opts,
+            canvas = atScale(pages, density, matte)[0],
+            url = canvas.toDataURL(mime, quality);
+        return Promise.resolve(url)
+      }
+    })
+  }
 }
 
-/**
- * Invokes `console.debug()` when available.
- * No-op when `console.debug` is not a "function".
- * If `console.debug` is not available, falls back
- * to `console.log`.
- *
- * @api public
- */
-exports.log = console.debug || console.log || (() => {});
+//
+// Browser helpers for converting canvas elements to blobs/buffers/files/zips
+//
 
-/**
- * Save `namespaces`.
- *
- * @param {String} namespaces
- * @api private
- */
-function save(namespaces) {
-	try {
-		if (namespaces) {
-			exports.storage.setItem('debug', namespaces);
-		} else {
-			exports.storage.removeItem('debug');
-		}
-	} catch (error) {
-		// Swallow
-		// XXX (@Qix-) should we be logging these?
-	}
+const asBlob = (canvas, mime, quality, matte) => {
+  if (matte){
+    let {width, height} = canvas,
+        comp = Object.assign(document.createElement('canvas'), {width, height}),
+        ctx = comp.getContext("2d")
+    ctx.fillStyle = matte
+    ctx.fillRect(0, 0, width, height)
+    ctx.drawImage(canvas, 0, 0)
+    canvas = comp
+  }
+
+  return new Promise((res, rej) => canvas.toBlob(res, mime, quality))
 }
 
-/**
- * Load `namespaces`.
- *
- * @return {String} returns the previously persisted debug modes
- * @api private
- */
-function load() {
-	let r;
-	try {
-		r = exports.storage.getItem('debug') || exports.storage.getItem('DEBUG') ;
-	} catch (error) {
-		// Swallow
-		// XXX (@Qix-) should we be logging these?
-	}
+const asBuffer = (...args) => asBlob(...args).then(b => b.arrayBuffer())
 
-	// If debug isn't set in LS, and we're in Electron, try to load $DEBUG
-	if (!r && typeof process !== 'undefined' && 'env' in process) {
-		r = process.env.DEBUG;
-	}
-
-	return r;
+const asDownload = async (canvas, mime, quality, matte, filename) => {
+  _download(filename, await asBlob(canvas, mime, quality, matte))
 }
 
-/**
- * Localstorage attempts to return the localstorage.
- *
- * This is necessary because safari throws
- * when a user disables cookies/localstorage
- * and you attempt to access it.
- *
- * @return {LocalStorage}
- * @api private
- */
+const asZipDownload = async (pages, mime, quality, matte, archive, pattern, padding) => {
+  await import("jszip").then(async ({default:JSZip}) => {
+    let filenames = i => pattern.replace('{}', String(i+1).padStart(padding, '0')),
+        zip = new JSZip(),
+        folder = basename(archive, '.zip') || 'archive',
+        payload = zip.folder(folder)
 
-function localstorage() {
-	try {
-		// TVMLKit (Apple TV JS Runtime) does not have a window object, just localStorage in the global context
-		// The Browser also has localStorage in the global context.
-		return localStorage;
-	} catch (error) {
-		// Swallow
-		// XXX (@Qix-) should we be logging these?
-	}
+    await Promise.all(pages.map(async (page, i) => {
+      let filename = filenames(i) // serialize filename(s) before awaiting
+      payload.file(filename, await asBlob(page, mime, quality, matte))
+    }))
+
+    zip.generateAsync({type:"blob"})
+      .then(content => _download(`${folder}.zip`, content))
+  })
+  .catch(() => {
+    console.log("Multi-page downloads require JSZip to be bundled: https://www.npmjs.com/package/jszip")
+  })
 }
 
-module.exports = require('./common')(exports);
+const _download = (filename, blob) => {
+  const href = window.URL.createObjectURL(blob),
+        link = document.createElement('a')
+  link.style.display = 'none'
+  link.href = href
+  link.setAttribute('download', filename)
+  if (typeof link.download === 'undefined') {
+    link.setAttribute('target', '_blank')
+  }
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  setTimeout(() => window.URL.revokeObjectURL(href), 100)
+}
 
-const {formatters} = module.exports;
+const atScale = (pages, density, matte) => pages.map(page => {
+  if (density == 1 && !matte) return page.canvas
 
-/**
- * Map %j to `JSON.stringify()`, since no Web Inspectors do that by default.
- */
+  let scaled = document.createElement('canvas'),
+      ctx = scaled.getContext("2d"),
+      src = page.canvas ? page.canvas : page
+  scaled.width = src.width * density
+  scaled.height = src.height * density
+  if (matte){
+    ctx.fillStyle = matte
+    ctx.fillRect(0, 0, scaled.width, scaled.height)
+  }
+  ctx.scale(density, density)
+  ctx.drawImage(src, 0, 0)
+  return scaled
+})
 
-formatters.j = function (v) {
-	try {
-		return JSON.stringify(v);
-	} catch (error) {
-		return '[UnexpectedJSONParseError]: ' + error.message;
-	}
-};
+//
+// Mime type <-> File extension mappings
+//
+
+class Format{
+  constructor(){
+    let png = "image/png",
+        jpg = "image/jpeg",
+        jpeg = "image/jpeg",
+        webp = "image/webp"
+
+    Object.assign(this, {
+      toMime: this.toMime.bind(this),
+      fromMime: this.fromMime.bind(this),
+      expected: `"png", "jpg", or "webp"`,
+      formats: {png, jpg, jpeg, webp},
+      mimes: {[png]: "png", [jpg]: "jpg", [webp]: "webp"},
+    })
+  }
+
+  toMime(ext){
+    return this.formats[(ext||'').replace(/^\./, '').toLowerCase()]
+  }
+
+  fromMime(mime){
+    return this.mimes[mime]
+  }
+}
+
+//
+// Validation of the options dict shared by the Canvas saveAs, toBuffer, and toDataURL methods
+//
+
+function basename(str, ext) {
+    let stub = str.substring(str.lastIndexOf('/') + 1)
+    return ext && stub.endsWith(ext) ? stub.slice(0, -ext.length) : stub
+}
+
+function extname(str){
+  return str.substring(str.lastIndexOf('.'))
+}
+
+function exportOptions(pages, {filename='', extension='', format, page, quality, matte, density, archive}={}){
+  var {fromMime, toMime, expected} = new Format(),
+      archive = ''+(archive || 'canvas'),
+      ext = format || extension.replace(/@\d+x$/i,'') || extname(filename),
+      format = fromMime(toMime(ext) || ext),
+      mime = toMime(format),
+      pp = pages.length
+
+  if (!ext) throw new Error(`Cannot determine image format (use a filename extension or 'format' argument)`)
+  if (!format) throw new Error(`Unsupported file format "${ext}" (expected ${expected})`)
+  if (!pp) throw new RangeError(`Canvas has no associated contexts (try calling getContext or newPage first)`)
+
+  let padding, isSequence, pattern = filename.replace(/{(\d*)}/g, (_, width) => {
+    isSequence = true
+    width = parseInt(width, 10)
+    padding = isFinite(width) ? width : isFinite(padding) ? padding : -1
+    return "{}"
+  })
+
+  // allow negative indexing if a specific page is specified
+  let idx = page > 0 ? page - 1
+          : page < 0 ? pp + page
+          : undefined;
+
+  if (isFinite(idx) && idx < 0 || idx >= pp) throw new RangeError(
+    pp == 1 ? `Canvas only has a ‘page 1’ (${idx} is out of bounds)`
+            : `Canvas has pages 1–${pp} (${idx} is out of bounds)`
+  )
+
+  pages = isFinite(idx) ? [pages[idx]]
+        : isSequence || format=='pdf' ? pages
+        : pages.slice(-1) // default to the 'current' context
+
+  if (quality===undefined){
+    quality = 0.92
+  }else{
+    if (typeof quality!='number' || !isFinite(quality) || quality<0 || quality>1){
+      throw new TypeError("The quality option must be an number in the 0.0–1.0 range")
+    }
+  }
+
+  if (density===undefined){
+    let m = (extension || basename(filename, ext)).match(/@(\d+)x$/i)
+    density = m ? parseInt(m[1], 10) : 1
+  }else if (typeof density!='number' || !Number.isInteger(density) || density<1){
+    throw new TypeError("The density option must be a non-negative integer")
+  }
+
+  return {filename, pattern, format, mime, pages, padding, quality, matte, density, archive}
+}
+
+
+const {CanvasRenderingContext2D, CanvasGradient, CanvasPattern,
+       Image, ImageData, Path2D, DOMMatrix, DOMRect, DOMPoint} = window;
+
+module.exports = {
+  Canvas, loadImage, loadImageData,
+  CanvasRenderingContext2D, CanvasGradient, CanvasPattern,
+  Image, ImageData, Path2D, DOMMatrix, DOMRect, DOMPoint
+}
