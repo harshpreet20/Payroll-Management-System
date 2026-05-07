@@ -1,244 +1,557 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Staff Attendance & Payroll</title>
-    <link rel="stylesheet" href="styles.css" />
-  </head>
-  <body>
-    <div class="app-shell">
-      <aside class="sidebar">
-        <div class="brand">
-          <div class="brand-mark">SP</div>
-          <div>
-            <h1>Staff Payroll</h1>
-            <p>Attendance and salary control</p>
-          </div>
-        </div>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PayrollPro — Modern Payroll Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div id="app">
 
-        <nav class="nav-tabs" aria-label="Main sections">
-          <button class="nav-tab active" type="button" data-tab="attendance">Attendance</button>
-          <button class="nav-tab" type="button" data-tab="employees">Employees</button>
-          <button class="nav-tab" type="button" data-tab="payroll">Payroll</button>
-          <button class="nav-tab" type="button" data-tab="settings">Settings</button>
-        </nav>
-
-        <div class="sidebar-card">
-          <span class="label">Today</span>
-          <strong id="todayLabel">--</strong>
-          <span class="muted">Webhook-backed workflow</span>
-        </div>
-      </aside>
-
-      <main class="content">
-        <header class="topbar">
-          <div>
-            <p class="eyebrow">Operations Dashboard</p>
-            <h2 id="screenTitle">Daily Attendance</h2>
-          </div>
-          <div class="status-pill" id="connectionStatus">Webhook not set</div>
-        </header>
-
-        <section class="summary-grid" aria-label="Quick summary">
-          <article class="metric">
-            <span>Staff Capacity</span>
-            <strong>50</strong>
-          </article>
-          <article class="metric">
-            <span>Regular Shift</span>
-            <strong>8h</strong>
-          </article>
-          <article class="metric">
-            <span>Overtime</span>
-            <strong>Auto</strong>
-          </article>
-          <article class="metric">
-            <span>Payroll Day</span>
-            <strong>1st</strong>
-          </article>
-        </section>
-
-        <section class="panel tab-panel active" id="attendance">
-          <div class="panel-head">
-            <div>
-              <h3>Record Daily Attendance</h3>
-              <p>Submit one staff entry at a time to n8n.</p>
-            </div>
-            <button class="ghost-button" type="button" id="fillSampleAttendance">Sample</button>
-          </div>
-
-          <form class="form-grid" id="attendanceForm">
-            <label>
-              Date
-              <input name="date" type="date" required />
-            </label>
-            <label>
-              Employee ID
-              <input name="employeeId" type="text" placeholder="EMP001" required />
-            </label>
-            <label>
-              Employee Name
-              <input name="employeeName" type="text" placeholder="Staff name" required />
-            </label>
-            <label>
-              Status
-              <select name="status" required>
-                <option>Present</option>
-                <option>Absent</option>
-                <option>Half Day</option>
-                <option>Paid Leave</option>
-                <option>Unpaid Leave</option>
-                <option>Weekly Off</option>
-                <option>Holiday</option>
-              </select>
-            </label>
-            <label>
-              Shift Hours
-              <input name="shiftHours" type="number" min="0" max="24" step="0.25" value="8" required />
-            </label>
-            <label>
-              Hours Worked
-              <input name="hoursWorked" type="number" min="0" max="24" step="0.25" value="8" required />
-            </label>
-            <label>
-              Late Minutes
-              <input name="lateMinutes" type="number" min="0" step="1" value="0" />
-            </label>
-            <label class="wide">
-              Remarks
-              <input name="remarks" type="text" placeholder="Optional notes" />
-            </label>
-            <div class="form-actions">
-              <button class="primary-button" type="submit">Submit Attendance</button>
-              <button class="secondary-button" type="reset">Clear</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="panel tab-panel" id="employees">
-          <div class="panel-head">
-            <div>
-              <h3>Add or Update Employee</h3>
-              <p>Send staff master data to n8n for Sheets or SQL.</p>
-            </div>
-            <button class="ghost-button" type="button" id="fillSampleEmployee">Sample</button>
-          </div>
-
-          <form class="form-grid" id="employeeForm">
-            <label>
-              Employee ID
-              <input name="employeeId" type="text" placeholder="EMP001" required />
-            </label>
-            <label>
-              Full Name
-              <input name="employeeName" type="text" placeholder="Staff name" required />
-            </label>
-            <label>
-              Role
-              <input name="role" type="text" placeholder="Operator" />
-            </label>
-            <label>
-              Department
-              <input name="department" type="text" placeholder="Production" />
-            </label>
-            <label>
-              Joining Date
-              <input name="joiningDate" type="date" />
-            </label>
-            <label>
-              Monthly Salary
-              <input name="monthlySalary" type="number" min="0" step="0.01" placeholder="20000" required />
-            </label>
-            <label>
-              Status
-              <select name="status" required>
-                <option>Active</option>
-                <option>Inactive</option>
-              </select>
-            </label>
-            <label class="wide">
-              Payment Details
-              <input name="paymentDetails" type="text" placeholder="Bank account, UPI, or internal note" />
-            </label>
-            <div class="form-actions">
-              <button class="primary-button" type="submit">Save Employee</button>
-              <button class="secondary-button" type="reset">Clear</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="panel tab-panel" id="payroll">
-          <div class="panel-head">
-            <div>
-              <h3>Generate Monthly Salary</h3>
-              <p>Trigger the monthly payroll workflow on demand.</p>
-            </div>
-          </div>
-
-          <form class="form-grid compact" id="payrollForm">
-            <label>
-              Payroll Month
-              <input name="payrollMonth" type="month" required />
-            </label>
-            <label>
-              Regular Shift Hours
-              <input name="regularShiftHours" type="number" min="1" max="24" step="0.25" value="8" required />
-            </label>
-            <label>
-              Overtime Multiplier
-              <input name="overtimeMultiplier" type="number" min="1" step="0.1" value="1.5" required />
-            </label>
-            <label>
-              Payment Date
-              <input name="paymentDate" type="date" required />
-            </label>
-            <div class="form-actions">
-              <button class="primary-button" type="submit">Generate Payroll</button>
-            </div>
-          </form>
-
-          <div class="callout">
-            <strong>Automatic option</strong>
-            <span>In n8n, schedule the same payroll action for the 1st of every month.</span>
-          </div>
-        </section>
-
-        <section class="panel tab-panel" id="settings">
-          <div class="panel-head">
-            <div>
-              <h3>Webhook Settings</h3>
-              <p>Use your production n8n webhook URL here.</p>
-            </div>
-          </div>
-
-          <form class="settings-form" id="settingsForm">
-            <label>
-              n8n Webhook URL
-              <input name="webhookUrl" type="url" placeholder="https://your-n8n.com/webhook/payroll" />
-            </label>
-            <label>
-              Business Name
-              <input name="businessName" type="text" placeholder="Your company name" />
-            </label>
-            <div class="form-actions">
-              <button class="primary-button" type="submit">Save Settings</button>
-              <button class="secondary-button" type="button" id="testWebhook">Test Webhook</button>
-            </div>
-          </form>
-        </section>
-
-        <section class="activity-panel">
-          <div class="activity-head">
-            <h3>Latest Request</h3>
-            <button class="ghost-button" type="button" id="copyPayload">Copy Payload</button>
-          </div>
-          <pre id="payloadPreview">{}</pre>
-          <div class="toast" id="toast" role="status" aria-live="polite"></div>
-        </section>
-      </main>
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      </div>
+      <span class="brand-name">PayrollPro</span>
     </div>
 
-    <script src="app.js"></script>
-  </body>
+    <div class="sidebar-section">
+      <p class="sidebar-section-label">Main</p>
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-page="dashboard">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" data-page="employees">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          <span>Employees</span>
+        </button>
+        <button class="nav-item" data-page="attendance">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span>Attendance</span>
+        </button>
+        <button class="nav-item" data-page="payroll">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          <span>Payroll</span>
+        </button>
+        <button class="nav-item" data-page="reports">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Reports</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-section">
+      <p class="sidebar-section-label">System</p>
+      <nav class="sidebar-nav">
+        <button class="nav-item" data-page="settings">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="n8n-status">
+        <div class="status-indicator disconnected" id="statusIndicator"></div>
+        <div class="status-info">
+          <span class="status-label">N8N Workflow</span>
+          <span class="status-value" id="statusText">Not Connected</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN WRAPPER ===== -->
+  <div class="main-wrapper">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="page-title" id="pageTitle">Dashboard</h1>
+      </div>
+      <div class="header-right">
+        <div class="header-date" id="headerDate"></div>
+        <div class="header-company" onclick="app.navigateTo('settings')">
+          <div class="company-avatar" id="companyAvatar">M</div>
+          <span id="companyNameText">My Company</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Pages -->
+    <main class="content-area">
+
+      <!-- ===== DASHBOARD ===== -->
+      <section id="page-dashboard" class="page active">
+        <div class="page-header">
+          <div>
+            <h2 id="dashGreeting">Good morning! 👋</h2>
+            <p class="text-secondary">Here's your payroll overview for today.</p>
+          </div>
+          <button class="btn btn-primary" onclick="app.navigateTo('payroll')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Run Payroll
+          </button>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-icon icon-blue">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <span class="metric-trend trend-up" id="empTrend">Active</span>
+            </div>
+            <div class="metric-value" id="metricEmployees">0</div>
+            <div class="metric-label">Total Employees</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-icon icon-green">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <span class="metric-trend" id="payrollMonthLabel2">This month</span>
+            </div>
+            <div class="metric-value" id="metricPayroll">₹0</div>
+            <div class="metric-label">Monthly Payroll</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-icon icon-amber">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <span class="metric-trend" id="attTrendLabel">Today</span>
+            </div>
+            <div class="metric-value" id="metricAttendance">--%</div>
+            <div class="metric-label">Attendance Rate</div>
+          </div>
+
+          <div class="metric-card">
+            <div class="metric-header">
+              <div class="metric-icon icon-purple">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              </div>
+              <span class="metric-trend" id="nextPayrollLabel">Upcoming</span>
+            </div>
+            <div class="metric-value" id="metricNextPayroll">--</div>
+            <div class="metric-label">Next Payroll Date</div>
+          </div>
+        </div>
+
+        <div class="charts-row">
+          <div class="card chart-card">
+            <div class="card-header">
+              <h3>Payroll Overview</h3>
+              <select class="select-sm" id="chartPeriod" onchange="app.updatePayrollChart()">
+                <option value="6">Last 6 months</option>
+                <option value="12">Last 12 months</option>
+              </select>
+            </div>
+            <div class="chart-container">
+              <canvas id="payrollChart"></canvas>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Departments</h3>
+            </div>
+            <div class="chart-container-sm">
+              <canvas id="deptChart"></canvas>
+            </div>
+            <div id="deptLegend" class="dept-legend"></div>
+          </div>
+        </div>
+
+        <div class="bottom-row">
+          <div class="card">
+            <div class="card-header">
+              <h3>Recent Attendance</h3>
+              <button class="btn-link" onclick="app.navigateTo('attendance')">View all</button>
+            </div>
+            <div class="activity-list" id="recentActivity">
+              <div class="empty-state">No recent activity</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h3>Top Earners</h3>
+            </div>
+            <div id="topEarners" class="earners-list">
+              <div class="empty-state">No data</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== EMPLOYEES ===== -->
+      <section id="page-employees" class="page">
+        <div class="page-header">
+          <div>
+            <h2>Employees</h2>
+            <p class="text-secondary" id="empCountLabel">0 employees</p>
+          </div>
+          <div class="header-actions">
+            <div class="search-box">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" placeholder="Search employees..." id="empSearch" oninput="app.filterEmployees()">
+            </div>
+            <select class="select-sm" id="empDeptFilter" onchange="app.filterEmployees()">
+              <option value="">All Departments</option>
+            </select>
+            <select class="select-sm" id="empStatusFilter" onchange="app.filterEmployees()">
+              <option value="">All Status</option>
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+            </select>
+            <button class="btn btn-primary" onclick="app.openEmployeeModal()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Add Employee
+            </button>
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Department</th>
+                <th>Role</th>
+                <th>Joining Date</th>
+                <th>Monthly CTC</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="employeesTbody">
+              <tr><td colspan="7" class="table-empty">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== ATTENDANCE ===== -->
+      <section id="page-attendance" class="page">
+        <div class="page-header">
+          <div>
+            <h2>Attendance</h2>
+            <p class="text-secondary">Track and manage employee attendance</p>
+          </div>
+          <div class="header-actions">
+            <div class="month-selector">
+              <button class="icon-btn" onclick="app.changeAttendanceMonth(-1)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span id="attendanceMonthLabel">Month Year</span>
+              <button class="icon-btn" onclick="app.changeAttendanceMonth(1)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+            <button class="btn btn-primary" onclick="app.openAttendanceModal()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Record Attendance
+            </button>
+          </div>
+        </div>
+
+        <div class="attendance-stats" id="attendanceStats"></div>
+
+        <div class="card table-card">
+          <div class="table-filters">
+            <div class="search-box">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" placeholder="Search by name..." id="attSearch" oninput="app.filterAttendance()">
+            </div>
+            <select class="select-sm" id="attStatusFilter" onchange="app.filterAttendance()">
+              <option value="">All Status</option>
+              <option value="Present">Present</option>
+              <option value="Absent">Absent</option>
+              <option value="Half Day">Half Day</option>
+              <option value="Leave">Leave</option>
+              <option value="Holiday">Holiday</option>
+              <option value="Weekly Off">Weekly Off</option>
+            </select>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Employee</th>
+                <th>Status</th>
+                <th>Hours Worked</th>
+                <th>Overtime</th>
+                <th>Late (min)</th>
+                <th>Remarks</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="attendanceTbody">
+              <tr><td colspan="8" class="table-empty">No records found</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== PAYROLL ===== -->
+      <section id="page-payroll" class="page">
+        <div class="page-header">
+          <div>
+            <h2>Payroll</h2>
+            <p class="text-secondary">Process and manage monthly payroll</p>
+          </div>
+          <div class="header-actions">
+            <div class="month-selector">
+              <button class="icon-btn" onclick="app.changePayrollMonth(-1)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+              </button>
+              <span id="payrollMonthLabel">Month Year</span>
+              <button class="icon-btn" onclick="app.changePayrollMonth(1)">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+              </button>
+            </div>
+            <button class="btn btn-secondary" onclick="app.exportPayrollCSV()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Export CSV
+            </button>
+            <button class="btn btn-primary" id="runPayrollBtn" onclick="app.generatePayroll()">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Run Payroll
+            </button>
+          </div>
+        </div>
+
+        <div class="payroll-summary-grid" id="payrollSummaryGrid"></div>
+
+        <div class="card table-card">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Paid Days</th>
+                <th>Basic Pay</th>
+                <th>Overtime</th>
+                <th>Gross Pay</th>
+                <th>Deductions</th>
+                <th>Net Pay</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="payrollTbody">
+              <tr><td colspan="9" class="table-empty">Select a month and run payroll to see results</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===== REPORTS ===== -->
+      <section id="page-reports" class="page">
+        <div class="page-header">
+          <div>
+            <h2>Reports</h2>
+            <p class="text-secondary">Analytics and payroll insights</p>
+          </div>
+        </div>
+
+        <div class="reports-grid">
+          <div class="card">
+            <div class="card-header"><h3>Payroll Trend (12 months)</h3></div>
+            <div class="chart-container" style="height:260px">
+              <canvas id="reportPayrollChart"></canvas>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><h3>Attendance Summary</h3></div>
+            <div class="chart-container" style="height:260px">
+              <canvas id="reportAttChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:16px">
+          <div class="card-header"><h3>Salary Distribution by Department</h3></div>
+          <div id="deptSalaryTable" class="dept-table"></div>
+        </div>
+      </section>
+
+      <!-- ===== SETTINGS ===== -->
+      <section id="page-settings" class="page">
+        <div class="page-header">
+          <div>
+            <h2>Settings</h2>
+            <p class="text-secondary">Configure your payroll system</p>
+          </div>
+        </div>
+
+        <div class="settings-grid">
+          <!-- Company Info -->
+          <div class="card">
+            <div class="settings-card-header">
+              <div class="settings-icon">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+              </div>
+              <div>
+                <h3>Company Information</h3>
+                <p>Basic details about your organization</p>
+              </div>
+            </div>
+            <div class="settings-form">
+              <div class="form-group">
+                <label>Company Name</label>
+                <input type="text" class="form-input" id="settingCompanyName" placeholder="e.g., Acme Corp">
+              </div>
+              <div class="form-group">
+                <label>Currency</label>
+                <select class="form-input" id="settingCurrency">
+                  <option value="INR">INR (₹)</option>
+                  <option value="USD">USD ($)</option>
+                  <option value="EUR">EUR (€)</option>
+                  <option value="GBP">GBP (£)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Payroll Day of Month</label>
+                <input type="number" class="form-input" id="settingPayrollDay" placeholder="e.g., 31" min="1" max="31">
+              </div>
+            </div>
+          </div>
+
+          <!-- Payroll Config -->
+          <div class="card">
+            <div class="settings-card-header">
+              <div class="settings-icon">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+              <div>
+                <h3>Payroll Configuration</h3>
+                <p>Salary computation settings</p>
+              </div>
+            </div>
+            <div class="settings-form">
+              <div class="form-group">
+                <label>Working Days / Month</label>
+                <input type="number" class="form-input" id="settingWorkingDays" placeholder="26" min="20" max="31">
+              </div>
+              <div class="form-group">
+                <label>Shift Hours / Day</label>
+                <input type="number" class="form-input" id="settingShiftHours" placeholder="8" min="4" max="12">
+              </div>
+              <div class="form-group">
+                <label>Overtime Multiplier</label>
+                <input type="number" class="form-input" id="settingOTMultiplier" placeholder="1.5" min="1" max="3" step="0.25">
+              </div>
+              <div class="form-group">
+                <label>PF Deduction Rate (%)</label>
+                <input type="number" class="form-input" id="settingPFRate" placeholder="12" min="0" max="25">
+              </div>
+            </div>
+          </div>
+
+          <!-- N8N Integration -->
+          <div class="card n8n-card">
+            <div class="settings-card-header">
+              <div class="settings-icon">
+                <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+              </div>
+              <div>
+                <h3>N8N Workflow Integration</h3>
+                <p>Connect to your N8N automation backend</p>
+              </div>
+            </div>
+            <div class="settings-form">
+              <div class="form-group">
+                <label>Webhook URL</label>
+                <input type="url" class="form-input" id="settingWebhookUrl" placeholder="https://your-n8n-instance.com/webhook/...">
+                <p class="form-hint">All payroll data is sent to this endpoint as JSON payloads</p>
+              </div>
+              <div class="n8n-status-display">
+                <div class="status-badge">
+                  <div class="status-dot disconnected" id="n8nStatusDot"></div>
+                  <span id="n8nStatusText">Not Connected</span>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="app.testWebhook()">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+                  Test Connection
+                </button>
+              </div>
+            </div>
+            <div class="n8n-help">
+              <h4>Supported Webhook Actions</h4>
+              <p>Configure your N8N workflow to route based on the <code>action</code> field in the payload:</p>
+              <div class="action-badges">
+                <span class="action-badge">employee_list</span>
+                <span class="action-badge">employee_upsert</span>
+                <span class="action-badge">employee_delete</span>
+                <span class="action-badge">attendance_list</span>
+                <span class="action-badge">attendance_record</span>
+                <span class="action-badge">attendance_delete</span>
+                <span class="action-badge">payroll_generate</span>
+                <span class="action-badge">payroll_list</span>
+                <span class="action-badge">dashboard_data</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="btn btn-secondary" onclick="app.resetSettings()">Reset to Defaults</button>
+          <button class="btn btn-primary" onclick="app.saveSettings()">Save Settings</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ===== MODAL (Employee / Attendance / Confirm) ===== -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="mainModal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Modal</h3>
+      <button class="modal-close" onclick="app.closeModal()">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ===== PAYSLIP MODAL ===== -->
+<div class="modal-overlay" id="payslipOverlay">
+  <div class="modal modal-lg" id="payslipModal">
+    <div class="modal-header">
+      <h3>Pay Slip</h3>
+      <div class="modal-actions">
+        <button class="btn btn-secondary btn-sm" onclick="window.print()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          Print
+        </button>
+        <button class="modal-close" onclick="app.closePayslip()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="modal-body" id="payslipBody"></div>
+  </div>
+</div>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
 </html>
