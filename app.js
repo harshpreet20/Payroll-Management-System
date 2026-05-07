@@ -250,27 +250,25 @@ class PayrollApp {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'login',
-          source: 'payrollpro',
-          timestamp: new Date().toISOString(),
-          data: { email, password },
+          username: email,
+          password,
         }),
       });
 
       const json = await res.json().catch(() => null);
 
-      if (res.ok && json?.success && json?.data) {
+      if (res.ok && json?.ok && json?.token) {
         const session = {
-          ...json.data,
+          token: json.token,
+          role: json.role,
+          name: json.name,
+          email,
           webhookUrl: this.settings.webhookUrl,
         };
         localStorage.setItem(STORAGE_KEYS.session, JSON.stringify(session));
-        if (json.data.companyName) {
-          this.settings.companyName = json.data.companyName;
-          localStorage.setItem(STORAGE_KEYS.settings, JSON.stringify(this.settings));
-        }
         this.showApp(session);
       } else {
-        const msg = json?.message || 'Invalid email or password. Please try again.';
+        const msg = json?.error || 'Invalid credentials. Please try again.';
         errEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> ${msg}`;
         errEl.style.display = 'flex';
       }
