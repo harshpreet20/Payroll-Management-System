@@ -1,0 +1,8 @@
+{
+  "skills": {
+    "token-optimize": {
+      "path": ".claude/skills/token-optimize.md",
+      "description": "Optimize tokens, compress context, and generate handoff prompts for Codex, Claude Code, Cursor, or other LLM tools."
+    }
+  }
+}

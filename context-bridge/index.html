@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Context Bridge — Token Optimizer & Handoff</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="overlay-shell">
+      <header class="toolbar">
+        <div class="toolbar-brand">
+          <span class="icon">&#9889;</span>
+          <h1>Context Bridge</h1>
+        </div>
+        <div class="toolbar-actions">
+          <button id="clearAll" class="btn-ghost" title="Clear all">Clear</button>
+          <button id="toggleTheme" class="btn-ghost" title="Toggle theme">&#9680;</button>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="input-panel">
+          <div class="panel-header">
+            <h2>Input Context</h2>
+            <div class="token-badge" id="inputTokens">0 tokens</div>
+          </div>
+          <textarea
+            id="inputContext"
+            placeholder="Paste your conversation context, code, or session data here..."
+            spellcheck="false"
+          ></textarea>
+          <div class="input-controls">
+            <button id="loadFile" class="btn-secondary">Load File</button>
+            <input type="file" id="fileInput" accept=".md,.txt,.json,.log" hidden />
+            <button id="loadClipboard" class="btn-secondary">From Clipboard</button>
+          </div>
+        </section>
+
+        <section class="controls-panel">
+          <h2>Optimization</h2>
+
+          <div class="control-group">
+            <label for="targetTool">Target Tool</label>
+            <select id="targetTool">
+              <option value="codex">OpenAI Codex (CLI agent)</option>
+              <option value="claude-code">Claude Code (new session)</option>
+              <option value="cursor">Cursor IDE</option>
+              <option value="copilot">GitHub Copilot Chat</option>
+              <option value="chatgpt">ChatGPT</option>
+              <option value="generic">Generic LLM</option>
+            </select>
+          </div>
+
+          <div class="control-group">
+            <label for="compressionLevel">Compression</label>
+            <input type="range" id="compressionLevel" min="1" max="5" value="3" />
+            <div class="range-labels">
+              <span>Verbose</span>
+              <span>Balanced</span>
+              <span>Minimal</span>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label>Preserve</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="keepDecisions" checked /> Decisions</label>
+              <label><input type="checkbox" id="keepFiles" checked /> File paths</label>
+              <label><input type="checkbox" id="keepCode" checked /> Code diffs</label>
+              <label><input type="checkbox" id="keepConstraints" checked /> Constraints</label>
+              <label><input type="checkbox" id="keepOpenItems" checked /> Open items</label>
+            </div>
+          </div>
+
+          <div class="control-group">
+            <label for="maxTokens">Token Budget</label>
+            <input type="number" id="maxTokens" value="2000" min="100" max="100000" step="100" />
+          </div>
+
+          <button id="optimize" class="btn-primary">Optimize Context</button>
+        </section>
+
+        <section class="output-panel">
+          <div class="panel-header">
+            <h2>Optimized Output</h2>
+            <div class="token-badge success" id="outputTokens">0 tokens</div>
+          </div>
+          <textarea
+            id="outputContext"
+            placeholder="Optimized context will appear here..."
+            spellcheck="false"
+            readonly
+          ></textarea>
+          <div class="output-controls">
+            <button id="copyOutput" class="btn-primary">Copy to Clipboard</button>
+            <button id="downloadOutput" class="btn-secondary">Download .md</button>
+            <div class="compression-stat" id="compressionStat"></div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="statusbar">
+        <span id="status">Ready</span>
+        <span id="ratio"></span>
+      </footer>
+    </div>
+
+    <script src="engine.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
