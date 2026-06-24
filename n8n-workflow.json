@@ -1,0 +1,433 @@
+{
+  "name": "PayrollPro — Complete Backend Workflow",
+  "meta": {
+    "instanceId": ""
+  },
+  "nodes": [
+    {
+      "id": "node-webhook",
+      "name": "PayrollPro Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "parameters": {
+        "path": "payrollpro",
+        "httpMethod": "POST",
+        "responseMode": "responseNode",
+        "options": {
+          "allowedOrigins": "*"
+        }
+      }
+    },
+    {
+      "id": "node-router",
+      "name": "Route by Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3,
+      "position": [500, 300],
+      "parameters": {
+        "mode": "rules",
+        "rules": {
+          "values": [
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c1", "leftValue": "={{ $json.body.action }}", "rightValue": "login", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "login"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c2", "leftValue": "={{ $json.body.action }}", "rightValue": "employee_list", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "employee_list"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c3", "leftValue": "={{ $json.body.action }}", "rightValue": "employee_upsert", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "employee_upsert"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c4", "leftValue": "={{ $json.body.action }}", "rightValue": "employee_delete", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "employee_delete"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c5", "leftValue": "={{ $json.body.action }}", "rightValue": "attendance_record", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "attendance_record"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c6", "leftValue": "={{ $json.body.action }}", "rightValue": "attendance_list", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "attendance_list"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c7", "leftValue": "={{ $json.body.action }}", "rightValue": "attendance_delete", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "attendance_delete"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c8", "leftValue": "={{ $json.body.action }}", "rightValue": "payroll_generate", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "payroll_generate"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c9", "leftValue": "={{ $json.body.action }}", "rightValue": "payroll_list", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "payroll_list"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c10", "leftValue": "={{ $json.body.action }}", "rightValue": "leave_submit", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "leave_submit"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c11", "leftValue": "={{ $json.body.action }}", "rightValue": "leave_approve", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "leave_approve"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c12", "leftValue": "={{ $json.body.action }}", "rightValue": "leave_reject", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "leave_reject"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c13", "leftValue": "={{ $json.body.action }}", "rightValue": "leave_list", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "leave_list"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c14", "leftValue": "={{ $json.body.action }}", "rightValue": "holiday_list", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "holiday_list"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c15", "leftValue": "={{ $json.body.action }}", "rightValue": "holiday_upsert", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "holiday_upsert"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c16", "leftValue": "={{ $json.body.action }}", "rightValue": "holiday_delete", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "holiday_delete"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c17", "leftValue": "={{ $json.body.action }}", "rightValue": "biometric_match", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "biometric_match"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c18", "leftValue": "={{ $json.body.action }}", "rightValue": "biometric_enroll", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "biometric_enroll"
+            },
+            {
+              "conditions": { "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict" }, "combinator": "and", "conditions": [ { "id": "c19", "leftValue": "={{ $json.body.action }}", "rightValue": "webhook_test", "operator": { "type": "string", "operation": "equals" } } ] },
+              "renameOutput": true, "outputKey": "webhook_test"
+            }
+          ]
+        },
+        "fallbackOutput": "extra"
+      }
+    },
+
+    {
+      "id": "node-login",
+      "name": "Handle Login",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 60],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\n\n// Seed default admin user on first run\nif (!store.users || store.users.length === 0) {\n  store.users = [{\n    id: 'U001',\n    email: 'admin@company.com',\n    password: 'admin123',\n    name: 'Admin User',\n    role: 'admin',\n    companyName: 'My Company'\n  }];\n}\n\nconst body = $input.first().json.body;\nconst { email, password } = body.data || {};\n\nif (!email || !password) {\n  return [{ json: { success: false, message: 'Email and password are required.' } }];\n}\n\nconst user = store.users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password);\n\nif (!user) {\n  return [{ json: { success: false, message: 'Invalid email or password.' } }];\n}\n\nconst token = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);\n\nreturn [{ json: {\n  success: true,\n  message: 'Login successful',\n  data: {\n    token,\n    userId: user.id,\n    name: user.name,\n    email: user.email,\n    role: user.role,\n    companyName: user.companyName || 'My Company',\n    expiresAt: Date.now() + 8 * 60 * 60 * 1000\n  }\n}}];\n"
+      }
+    },
+    {
+      "id": "node-employee-list",
+      "name": "Employee List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 180],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nreturn [{ json: { success: true, data: store.employees || [] } }];\n"
+      }
+    },
+    {
+      "id": "node-employee-upsert",
+      "name": "Employee Upsert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 300],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.employees) store.employees = [];\n\nconst emp = $input.first().json.body.data;\nif (!emp || !emp.employeeId) {\n  return [{ json: { success: false, message: 'Missing employee data.' } }];\n}\n\nconst idx = store.employees.findIndex(e => e.employeeId === emp.employeeId);\nif (idx >= 0) {\n  store.employees[idx] = emp;\n} else {\n  store.employees.push(emp);\n}\n\nreturn [{ json: { success: true, data: emp, message: idx >= 0 ? 'Employee updated.' : 'Employee created.' } }];\n"
+      }
+    },
+    {
+      "id": "node-employee-delete",
+      "name": "Employee Delete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 420],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.employees) store.employees = [];\n\nconst { employeeId } = $input.first().json.body.data || {};\nif (!employeeId) return [{ json: { success: false, message: 'Missing employeeId.' } }];\n\nstore.employees = store.employees.filter(e => e.employeeId !== employeeId);\nif (store.attendance) store.attendance = store.attendance.filter(a => a.employeeId !== employeeId);\nif (store.leaves) store.leaves = store.leaves.filter(l => l.employeeId !== employeeId);\n\nreturn [{ json: { success: true, message: 'Employee deleted.' } }];\n"
+      }
+    },
+    {
+      "id": "node-attendance-record",
+      "name": "Attendance Record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 540],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.attendance) store.attendance = [];\n\nconst rec = $input.first().json.body.data;\nif (!rec || !rec.id) return [{ json: { success: false, message: 'Missing attendance data.' } }];\n\nconst idx = store.attendance.findIndex(a => a.id === rec.id);\nif (idx >= 0) {\n  store.attendance[idx] = rec;\n} else {\n  store.attendance.push(rec);\n}\n\nreturn [{ json: { success: true, data: rec, message: 'Attendance saved.' } }];\n"
+      }
+    },
+    {
+      "id": "node-attendance-list",
+      "name": "Attendance List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 660],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst { month } = $input.first().json.body.data || {};\nconst records = store.attendance || [];\nconst filtered = month ? records.filter(r => r.date && r.date.startsWith(month)) : records;\nreturn [{ json: { success: true, data: filtered } }];\n"
+      }
+    },
+    {
+      "id": "node-attendance-delete",
+      "name": "Attendance Delete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 780],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.attendance) store.attendance = [];\n\nconst { id } = $input.first().json.body.data || {};\nif (!id) return [{ json: { success: false, message: 'Missing id.' } }];\n\nconst before = store.attendance.length;\nstore.attendance = store.attendance.filter(a => a.id !== id);\nconst deleted = before - store.attendance.length;\n\nreturn [{ json: { success: true, message: deleted > 0 ? 'Record deleted.' : 'Record not found.' } }];\n"
+      }
+    },
+    {
+      "id": "node-payroll-generate",
+      "name": "Payroll Generate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 900],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.payrolls) store.payrolls = [];\n\nconst body = $input.first().json.body;\nconst { month, payrolls: incoming } = body.data || {};\n\nif (!month || !incoming) return [{ json: { success: false, message: 'Missing month or payroll data.' } }];\n\nstore.payrolls = store.payrolls.filter(p => p.month !== month);\nstore.payrolls.push(...incoming);\n\nreturn [{ json: { success: true, data: incoming, message: 'Payroll saved for ' + month + '.' } }];\n"
+      }
+    },
+    {
+      "id": "node-payroll-list",
+      "name": "Payroll List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 1020],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst { month } = $input.first().json.body.data || {};\nconst records = store.payrolls || [];\nconst filtered = month ? records.filter(p => p.month === month) : records;\nreturn [{ json: { success: true, data: filtered } }];\n"
+      }
+    },
+
+    {
+      "id": "node-leave-submit",
+      "name": "Leave Submit",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 1140],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.leaves) store.leaves = [];\n\nconst leave = $input.first().json.body.data;\nif (!leave || !leave.id || !leave.employeeId) {\n  return [{ json: { success: false, message: 'Missing leave data.' } }];\n}\n\n// Prevent duplicate submissions\nconst existing = store.leaves.findIndex(l => l.id === leave.id);\nif (existing >= 0) {\n  store.leaves[existing] = leave;\n} else {\n  leave.status = leave.status || 'Pending';\n  leave.appliedOn = leave.appliedOn || new Date().toISOString().slice(0, 10);\n  store.leaves.unshift(leave);\n}\n\nreturn [{ json: { success: true, data: leave, message: 'Leave request submitted.' } }];\n"
+      }
+    },
+    {
+      "id": "node-leave-approve",
+      "name": "Leave Approve",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 1260],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.leaves) store.leaves = [];\n\nconst { id, approvedBy, approvedOn } = $input.first().json.body.data || {};\nif (!id) return [{ json: { success: false, message: 'Missing leave id.' } }];\n\nconst leave = store.leaves.find(l => l.id === id);\nif (!leave) return [{ json: { success: false, message: 'Leave not found.' } }];\n\nleave.status = 'Approved';\nleave.approvedBy = approvedBy || 'Admin';\nleave.approvedOn = approvedOn || new Date().toISOString().slice(0, 10);\n\nreturn [{ json: { success: true, data: leave, message: 'Leave approved.' } }];\n"
+      }
+    },
+    {
+      "id": "node-leave-reject",
+      "name": "Leave Reject",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 1380],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.leaves) store.leaves = [];\n\nconst { id, rejectedBy, rejectedOn, reason } = $input.first().json.body.data || {};\nif (!id) return [{ json: { success: false, message: 'Missing leave id.' } }];\n\nconst leave = store.leaves.find(l => l.id === id);\nif (!leave) return [{ json: { success: false, message: 'Leave not found.' } }];\n\nleave.status = 'Rejected';\nleave.rejectedBy = rejectedBy || 'Admin';\nleave.rejectedOn = rejectedOn || new Date().toISOString().slice(0, 10);\nif (reason) leave.rejectionReason = reason;\n\nreturn [{ json: { success: true, data: leave, message: 'Leave rejected.' } }];\n"
+      }
+    },
+    {
+      "id": "node-leave-list",
+      "name": "Leave List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [780, 1500],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nconst { employeeId, status, year } = $input.first().json.body.data || {};\nlet leaves = store.leaves || [];\nif (employeeId) leaves = leaves.filter(l => l.employeeId === employeeId);\nif (status) leaves = leaves.filter(l => l.status === status);\nif (year) leaves = leaves.filter(l => l.fromDate && l.fromDate.startsWith(String(year)));\nreturn [{ json: { success: true, data: leaves, total: leaves.length } }];\n"
+      }
+    },
+
+    {
+      "id": "node-holiday-list",
+      "name": "Holiday List",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 1140],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\n\n// Seed India 2025 holidays on first run\nif (!store.holidays || store.holidays.length === 0) {\n  store.holidays = [\n    { id:'H001', name:\"New Year's Day\",    date:'2025-01-01', type:'National', isPaid:true,  desc:'' },\n    { id:'H002', name:'Republic Day',      date:'2025-01-26', type:'National', isPaid:true,  desc:'National holiday' },\n    { id:'H003', name:'Holi',              date:'2025-03-14', type:'National', isPaid:true,  desc:'' },\n    { id:'H004', name:'Eid ul-Fitr',       date:'2025-03-31', type:'National', isPaid:true,  desc:'' },\n    { id:'H005', name:'Ambedkar Jayanti',  date:'2025-04-14', type:'National', isPaid:true,  desc:'' },\n    { id:'H006', name:'Good Friday',       date:'2025-04-18', type:'National', isPaid:true,  desc:'' },\n    { id:'H007', name:'Labour Day',        date:'2025-05-01', type:'National', isPaid:true,  desc:'International Workers Day' },\n    { id:'H008', name:'Independence Day',  date:'2025-08-15', type:'National', isPaid:true,  desc:'National holiday' },\n    { id:'H009', name:'Gandhi Jayanti',    date:'2025-10-02', type:'National', isPaid:true,  desc:'National holiday' },\n    { id:'H010', name:'Diwali',            date:'2025-10-20', type:'National', isPaid:true,  desc:'' },\n    { id:'H011', name:'Christmas Day',     date:'2025-12-25', type:'National', isPaid:true,  desc:'' }\n  ];\n}\n\nconst { year } = $input.first().json.body.data || {};\nlet holidays = store.holidays;\nif (year) holidays = holidays.filter(h => h.date.startsWith(String(year)));\nholidays = holidays.sort((a, b) => a.date.localeCompare(b.date));\n\nreturn [{ json: { success: true, data: holidays, total: holidays.length } }];\n"
+      }
+    },
+    {
+      "id": "node-holiday-upsert",
+      "name": "Holiday Upsert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 1260],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.holidays) store.holidays = [];\n\nconst h = $input.first().json.body.data;\nif (!h || !h.name || !h.date) {\n  return [{ json: { success: false, message: 'Missing holiday name or date.' } }];\n}\n\nif (!h.id) h.id = 'H' + Date.now();\n\nconst idx = store.holidays.findIndex(x => x.id === h.id);\nif (idx >= 0) {\n  store.holidays[idx] = h;\n} else {\n  store.holidays.push(h);\n}\n\nreturn [{ json: { success: true, data: h, message: idx >= 0 ? 'Holiday updated.' : 'Holiday added.' } }];\n"
+      }
+    },
+    {
+      "id": "node-holiday-delete",
+      "name": "Holiday Delete",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1060, 1380],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.holidays) store.holidays = [];\n\nconst { id } = $input.first().json.body.data || {};\nif (!id) return [{ json: { success: false, message: 'Missing holiday id.' } }];\n\nconst before = store.holidays.length;\nstore.holidays = store.holidays.filter(h => h.id !== id);\nconst deleted = before - store.holidays.length;\n\nreturn [{ json: { success: true, message: deleted > 0 ? 'Holiday deleted.' : 'Holiday not found.' } }];\n"
+      }
+    },
+
+    {
+      "id": "node-biometric-match",
+      "name": "Biometric Match",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 1140],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.bioLog) store.bioLog = [];\n\nconst { employeeId, deviceUserId, date, time } = $input.first().json.body.data || {};\nif (!employeeId) return [{ json: { success: false, message: 'Missing employeeId.' } }];\n\n// Find the employee\nconst employees = store.employees || [];\nconst emp = employees.find(e => e.employeeId === employeeId);\nif (!emp) return [{ json: { success: false, message: 'Employee not found.' } }];\n\n// Prevent duplicate attendance for same day\nif (!store.attendance) store.attendance = [];\nconst todayDate = date || new Date().toISOString().slice(0, 10);\nconst existing = store.attendance.find(a => a.employeeId === employeeId && a.date === todayDate);\nif (!existing) {\n  store.attendance.push({\n    id: 'bio_' + Date.now(),\n    employeeId,\n    date: todayDate,\n    status: 'Present',\n    hoursWorked: 8,\n    overtimeHours: 0,\n    lateMinutes: 0,\n    remarks: 'Biometric'\n  });\n}\n\n// Append to bio log\nstore.bioLog.unshift({\n  id: 'bl_' + Date.now(),\n  employeeId,\n  deviceUserId: deviceUserId || emp.biometricDeviceId,\n  date: todayDate,\n  time: time || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true }),\n  status: 'Present',\n  timestamp: new Date().toISOString()\n});\n// Keep only last 500 log entries\nif (store.bioLog.length > 500) store.bioLog = store.bioLog.slice(0, 500);\n\nreturn [{ json: { success: true, data: { employeeName: emp.employeeName, employeeId, date: todayDate }, message: 'Attendance marked via biometric.' } }];\n"
+      }
+    },
+    {
+      "id": "node-biometric-enroll",
+      "name": "Biometric Enroll",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 1260],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nif (!store.employees) store.employees = [];\n\nconst { employeeId, deviceUserId } = $input.first().json.body.data || {};\nif (!employeeId || !deviceUserId) {\n  return [{ json: { success: false, message: 'Missing employeeId or deviceUserId.' } }];\n}\n\n// Check for duplicate device user ID\nconst duplicate = store.employees.find(e => e.biometricDeviceId === deviceUserId && e.employeeId !== employeeId);\nif (duplicate) {\n  return [{ json: { success: false, message: 'Device user ID ' + deviceUserId + ' is already assigned to ' + duplicate.employeeName + '.' } }];\n}\n\nconst emp = store.employees.find(e => e.employeeId === employeeId);\nif (!emp) return [{ json: { success: false, message: 'Employee not found.' } }];\n\nemp.biometricDeviceId = deviceUserId;\nreturn [{ json: { success: true, data: { employeeId, deviceUserId, employeeName: emp.employeeName }, message: emp.employeeName + ' enrolled with device ID: ' + deviceUserId } }];\n"
+      }
+    },
+
+    {
+      "id": "node-webhook-test",
+      "name": "Webhook Test",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 1380],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const store = $getWorkflowStaticData('global');\nreturn [{ json: { success: true, message: 'PayrollPro webhook is connected and working!', timestamp: new Date().toISOString(), stats: { employees: (store.employees || []).length, leaves: (store.leaves || []).length, holidays: (store.holidays || []).length, attendance: (store.attendance || []).length } } }];\n"
+      }
+    },
+    {
+      "id": "node-fallback",
+      "name": "Unknown Action",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 1500],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const action = $input.first().json.body?.action || 'unknown';\nreturn [{ json: { success: true, message: 'Action \\'' + action + '\\' received. No handler defined.' } }];\n"
+      }
+    },
+
+    {
+      "id": "node-respond-login",
+      "name": "Respond Login",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1060, 60],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "node-respond-generic",
+      "name": "Respond Generic",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1620, 600],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type", "value": "application/json" }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "PayrollPro Webhook": {
+      "main": [
+        [{ "node": "Route by Action", "type": "main", "index": 0 }]
+      ]
+    },
+    "Route by Action": {
+      "main": [
+        [{ "node": "Handle Login",       "type": "main", "index": 0 }],
+        [{ "node": "Employee List",      "type": "main", "index": 0 }],
+        [{ "node": "Employee Upsert",    "type": "main", "index": 0 }],
+        [{ "node": "Employee Delete",    "type": "main", "index": 0 }],
+        [{ "node": "Attendance Record",  "type": "main", "index": 0 }],
+        [{ "node": "Attendance List",    "type": "main", "index": 0 }],
+        [{ "node": "Attendance Delete",  "type": "main", "index": 0 }],
+        [{ "node": "Payroll Generate",   "type": "main", "index": 0 }],
+        [{ "node": "Payroll List",       "type": "main", "index": 0 }],
+        [{ "node": "Leave Submit",       "type": "main", "index": 0 }],
+        [{ "node": "Leave Approve",      "type": "main", "index": 0 }],
+        [{ "node": "Leave Reject",       "type": "main", "index": 0 }],
+        [{ "node": "Leave List",         "type": "main", "index": 0 }],
+        [{ "node": "Holiday List",       "type": "main", "index": 0 }],
+        [{ "node": "Holiday Upsert",     "type": "main", "index": 0 }],
+        [{ "node": "Holiday Delete",     "type": "main", "index": 0 }],
+        [{ "node": "Biometric Match",    "type": "main", "index": 0 }],
+        [{ "node": "Biometric Enroll",   "type": "main", "index": 0 }],
+        [{ "node": "Webhook Test",       "type": "main", "index": 0 }],
+        [{ "node": "Unknown Action",     "type": "main", "index": 0 }]
+      ]
+    },
+    "Handle Login":      { "main": [[{ "node": "Respond Login",   "type": "main", "index": 0 }]] },
+    "Employee List":     { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Employee Upsert":   { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Employee Delete":   { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Attendance Record": { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Attendance List":   { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Attendance Delete": { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Payroll Generate":  { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Payroll List":      { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Leave Submit":      { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Leave Approve":     { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Leave Reject":      { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Leave List":        { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Holiday List":      { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Holiday Upsert":    { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Holiday Delete":    { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Biometric Match":   { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Biometric Enroll":  { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Webhook Test":      { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] },
+    "Unknown Action":    { "main": [[{ "node": "Respond Generic", "type": "main", "index": 0 }]] }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
